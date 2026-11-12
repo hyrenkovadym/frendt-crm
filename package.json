@@ -1,0 +1,9 @@
+{
+  "name": "frendt-crm",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "FRENDT CRM — облік заявок, сервер із базою даних SQLite",
+  "engines": { "node": ">=22.5" },
+  "scripts": { "start": "node --experimental-sqlite --no-warnings server.mjs" }
+}
