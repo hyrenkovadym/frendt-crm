@@ -81,18 +81,6 @@ function sync(body) {
       const s = JSON.stringify(it); q.upCli.run(k, s, t, r); q.hist.run(t, 'client', k, s);
     }
     if (body.dicts && typeof body.dicts === 'object') { const s = JSON.stringify(body.dicts); q.upDicts.run(s, t); q.hist.run(t, 'dicts', 'custom', s); }
-    // Видалення з режиму адміністратора; попередній вміст лишається в журналі змін.
-    const deleted = body.deleted || {};
-    for (const id of Array.isArray(deleted.requests) ? deleted.requests : []) {
-      db.prepare('DELETE FROM requests WHERE id = ?').run(Number(id));
-      q.hist.run(t, 'request-deleted', String(id), '{}');
-    }
-    for (const code of Array.isArray(deleted.clients) ? deleted.clients : []) {
-      const key = String(code).trim();
-      if (!key) continue;
-      db.prepare('DELETE FROM clients WHERE edrpou = ?').run(key);
-      q.hist.run(t, 'client-deleted', key, '{}');
-    }
     return r;
   });
 }
