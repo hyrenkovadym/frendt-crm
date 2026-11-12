@@ -3,7 +3,7 @@ services:
     name: frendt-crm
     runtime: node
     region: frankfurt
-    plan: starter
+    plan: free
     buildCommand: echo no build
     startCommand: npm start
     healthCheckPath: /api/health
@@ -11,14 +11,10 @@ services:
       - key: HOST
         value: 0.0.0.0
       - key: DATA_DIR
-        value: /var/data
+        value: /tmp/frendt-crm-data
       - key: NODE_VERSION
         value: "22"
       - key: CRM_USERNAME
         value: VolodymyrHirenko
       - key: CRM_PASSWORD
         sync: false
-    disk:
-      name: frendt-crm-data
-      mountPath: /var/data
-      sizeGB: 1
