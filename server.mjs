@@ -23,7 +23,6 @@ const DB_FILE = join(DATA_DIR, 'frendt-crm.db');
 
 /* __EMBEDDED_HTML__ */
 const HTML_FILE = join(here, 'public', 'index.html');
-const MAIN_REQUESTS_FILE = join(here, 'main-requests.json');
 const getHtml = (nonce = '') => {
   const html = typeof EMBEDDED_HTML === 'string' ? EMBEDDED_HTML : readFileSync(HTML_FILE, 'utf8');
   return nonce ? html.replace('<script>', `<script nonce="${nonce}">`) : html;
@@ -264,22 +263,6 @@ createServer(async (req, res) => {
     if (p.startsWith('/api/')) {
       const me = whoami(req); if (!me) return send(res, 401, { error: 'auth' });
       const admin = me.role === 'admin';
-      if (p === '/api/import-main-requests-once' && req.method === 'GET') {
-        if (!admin) return send(res, 403, { error: 'Лише для адміністратора' });
-        if (url.searchParams.get('confirm') !== '103' || req.headers['sec-fetch-site'] !== 'none') return send(res, 403, { error: 'Потрібне пряме підтвердження імпорту' });
-        const done = db.prepare(`SELECT v FROM meta WHERE k='main_requests_2026_11_16'`).get();
-        if (done) { const counts = q.count.get(); return send(res, 200, { ok: true, alreadyImported: true, requests: counts.r, clientsUntouched: counts.c }); }
-        const incoming = JSON.parse(readFileSync(MAIN_REQUESTS_FILE, 'utf8'));
-        const ids = new Set(incoming.map(x => Number(x?.id)));
-        if (incoming.length !== 103 || ids.size !== 103 || [...ids].some(id => !Number.isInteger(id) || id < 1)) return send(res, 400, { error: 'Файл основної таблиці не пройшов перевірку' });
-        const before = q.allReq.all().map(x => JSON.parse(x.data));
-        const removed = before.map(x => Number(x.id)).filter(id => !ids.has(id));
-        await backup();
-        sync({ requests: incoming, deleted: { requests: removed } }, me.login);
-        db.prepare(`INSERT INTO meta (k, v) VALUES ('main_requests_2026_11_16', ?)`).run(now());
-        const counts = q.count.get();
-        return send(res, 200, { ok: true, replaced: true, before: before.length, requests: counts.r, removed: removed.length, clientsUntouched: counts.c });
-      }
       if (p === '/api/password' && req.method === 'POST') { const b = await readJson(req); const u = U.get.get(me.login); if (!checkPass(b.old, u.pass)) return send(res, 400, { error: 'Поточний пароль неправильний' }); if (String(b.password || '').length < 6) return send(res, 400, { error: 'Новий пароль — від 6 символів' }); U.pass.run(hashPass(b.password), me.login); return send(res, 200, { ok: true }); }
       if (p === '/api/users') {
         if (!admin) return send(res, 403, { error: 'Лише для адміністратора' });
