@@ -582,7 +582,7 @@ const CLIENT_FIELDS=['edrpou','client','region','district','address','contact','
 
 /* ---------- Сховище: заявки — 'frendt_exact_v1', база клієнтів — 'frendt_exact_v1_clients' ---------- */
 const KEY='frendt_sheet_v2',KEY_CLIENTS='frendt_sheet_v2_clients';
-var serverMode=false,serverRev=-1,pushTimer=null,pushing=false;
+var serverMode=false,serverRev=-1,pushTimer=null,pushing=false,pulling=false,syncTimer=null;
 let pendingDel=(()=>{try{return JSON.parse(localStorage.getItem('frendt_sheet_v2_deleted'))||{requests:[],clients:[]}}catch{return{requests:[],clients:[]}}})();
 const saveDel=()=>{try{localStorage.setItem('frendt_sheet_v2_deleted',JSON.stringify(pendingDel))}catch(e){}};
 const load=(k,f)=>{try{const v=JSON.parse(localStorage.getItem(k));return v||f()}catch{return f()}};
@@ -760,7 +760,8 @@ let snapReq=new Map(),snapCli=new Map(),snapDicts='';
 const ckey=c=>String(c?.edrpou??'').trim();
 function dirty(){return{reqs:requests.filter(r=>snapReq.get(r.id)!==jr(r)),clis:clients.filter(c=>ckey(c)&&snapCli.get(ckey(c))!==jr(c)),dicts:snapDicts!==jr(custom)}}
 function storeLocal(){try{localStorage.setItem(KEY,jr(requests));localStorage.setItem(KEY_CLIENTS,jr(clients));localStorage.setItem(KEY_DICTS,jr(custom))}catch(e){}}
-function applyServer(d){const dd=dirty();
+function applyServer(d,preserveLocal=true){const dd=preserveLocal?dirty():{reqs:[],clis:[],dicts:false};
+ if(!preserveLocal){pendingDel={requests:[],clients:[]};saveDel()}
  const reqs=Array.isArray(d.requests)?d.requests.map(r=>({...r})):requests.slice();const clis=Array.isArray(d.clients)?d.clients.map(c=>({...c})):clients.slice();
  snapReq=new Map((d.requests||[]).map(r=>[r.id,jr(r)]));snapCli=new Map((d.clients||[]).map(c=>[ckey(c),jr(c)]));
  reqs.forEach(r=>{if(OLD_STAGE[r.stage])r.stage=OLD_STAGE[r.stage]});
@@ -773,11 +774,10 @@ function pushServer(){if(!serverMode)return;clearTimeout(pushTimer);pushTimer=se
  try{const r=await fetch('api/sync',{method:'POST',headers:API_H,body:JSON.stringify({requests:dd.reqs,clients:dd.clis,dicts:dd.dicts?custom:undefined,deleted:del})});if(r.ok){pendingDel.requests=pendingDel.requests.filter(x=>!del.requests.includes(x));pendingDel.clients=pendingDel.clients.filter(x=>!del.clients.includes(x));saveDel();sentR.forEach(([k,v])=>snapReq.set(k,v));sentC.forEach(([k,v])=>snapCli.set(k,v));if(sentD!==null)snapDicts=sentD;setSyncState(true)}else toast('Не вдалося зберегти в базу','Перевірте, що сервер CRM запущено')}catch(e){setSyncState(false);toast('Немає зв’язку із сервером CRM','Зміни збережено тут і відправляться, щойно зв’язок з’явиться')}
  pushing=false;if(dirty().reqs.length||dirty().clis.length)pushServer()},250)}
 async function createOnServer(r){const body={...r};delete body.id;const x=await fetch('api/requests',{method:'POST',headers:API_H,body:JSON.stringify(body)});if(!x.ok)throw new Error('create');const {request}=await x.json();snapReq.set(request.id,jr(request));return request}
-const busy=()=>document.querySelector('#modalBackdrop.show')||['INPUT','SELECT','TEXTAREA'].includes(document.activeElement?.tagName);
-async function pullServer(first){try{const r=await fetch(API+'?rev='+(first?-1:serverRev)+'&_='+Date.now(),{headers:API_H,cache:'no-store'});if(r.status===401&&me){showAuth({});return false}if(!r.ok||!(r.headers.get('content-type')||'').includes('json'))return false;const d=await r.json();if(typeof d.rev!=='number')return false;serverMode=true;if(d.unchanged){setSyncState(true);if(!first)pushServer();return true}
- if(d.rev!==serverRev&&!pushing&&!(busy()&&!first)){const openId=document.querySelector('#drawer.show')?window.__openReq:null;applyServer(d);render();if(openId)openDrawer(openId)}
+async function pullServer(first=false){if(pulling)return false;pulling=true;try{const r=await fetch(API+'?rev='+(first?-1:serverRev)+'&_='+Date.now(),{headers:API_H,cache:'no-store'});if(r.status===401&&me){showAuth({});return false}if(!r.ok||!(r.headers.get('content-type')||'').includes('json'))return false;const d=await r.json();if(typeof d.rev!=='number')return false;serverMode=true;if(d.unchanged){setSyncState(true);if(!first)pushServer();return true}
+ if(d.rev!==serverRev&&!pushing){const openId=document.querySelector('#drawer.show')?window.__openReq:null;applyServer(d,!first);render();if(openId)openDrawer(openId)}
  if(first)pushServer();
- setSyncState(true);if(!first)pushServer();return true}catch(e){if(serverMode)setSyncState(false);return false}}
+ setSyncState(true);if(!first)pushServer();return true}catch(e){if(serverMode)setSyncState(false);return false}finally{pulling=false}}
 function setSyncState(ok){const b=document.querySelector('.automation-state');if(!b)return;b.querySelector('b').textContent=ok?'Спільна база':'Немає зв’язку із сервером';b.querySelector('small').textContent=ok?'Усі бачать ті самі заявки й клієнтів':'Зміни поки зберігаються лише тут';b.classList.toggle('offline',!ok)}
 /* ---------- Адміністратор: вхід, редагування, видалення, імпорт ---------- */
 function askConfirm(title,msg,btn,go){const w=document.createElement('div');w.className='confirm-wrap';w.innerHTML=`<div class="confirm"><h3>${esc(title)}</h3><p>${esc(msg)}</p><div class="form-actions"><button type="button" class="cancel-btn" data-no>Скасувати</button><button type="button" class="danger-btn" data-yes>${esc(btn)}</button></div></div>`;document.body.appendChild(w);w.querySelector('[data-no]').onclick=()=>w.remove();w.onclick=e=>{if(e.target===w)w.remove()};w.querySelector('[data-yes]').onclick=()=>{w.remove();go()}}
@@ -858,7 +858,7 @@ async function boot(){let r=null;try{r=await fetch('api/me',{headers:API_H,cache
  if(r.status===401){document.body.classList.add('locked');showAuth(d);return}
  if(!r.ok||!d.user){render();return}
  me=d.user;updateUserBlock();render();
- const ok=await pullServer(true);if(ok)setInterval(()=>pullServer(false),8000)}
+ const ok=await pullServer(true);if(ok){syncTimer=setInterval(()=>pullServer(),3000);addEventListener('focus',()=>pullServer());document.addEventListener('visibilitychange',()=>{if(!document.hidden)pullServer()})}}
 boot();
 
 </script>
