@@ -233,7 +233,12 @@ createServer(async (req, res) => {
         }
         if (req.method === 'DELETE') { if (!u) return send(res, 404, { error: 'Немає такого користувача' }); if (login === me.login) return send(res, 400, { error: 'Не можна видалити себе' }); if (u.role === 'admin' && U.admins.get().n < 2) return send(res, 400, { error: 'Має залишитися хоча б один адміністратор' }); U.sDelUser.run(login); U.del.run(login); return send(res, 200, { users: U.all.all() }); }
       }
-      if (p === '/api/data' && req.method === 'GET') return send(res, 200, { ...state(), me: publicUser(me) });
+      if (p === '/api/data' && req.method === 'GET') {
+        const knownRev = Number(url.searchParams.get('rev'));
+        const currentRev = rev();
+        if (Number.isFinite(knownRev) && knownRev === currentRev) return send(res, 200, { rev: currentRev, unchanged: true });
+        return send(res, 200, { ...state(), me: publicUser(me) });
+      }
       if ((p === '/api/data' || p === '/api/sync') && (req.method === 'PUT' || req.method === 'POST')) { const b = await readJson(req); if (!admin) { delete b.deleted; } sync(b, me.login); return send(res, 200, state()); }
       if (p === '/api/requests' && req.method === 'POST') { const rec = createRequest({ ...(await readJson(req)), author: me.name }, me.login); return send(res, 200, { request: rec, rev: rev() }); }
       return send(res, 404, { error: 'Not found' });

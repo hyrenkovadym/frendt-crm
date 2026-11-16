@@ -774,7 +774,7 @@ function pushServer(){if(!serverMode)return;clearTimeout(pushTimer);pushTimer=se
  pushing=false;if(dirty().reqs.length||dirty().clis.length)pushServer()},250)}
 async function createOnServer(r){const body={...r};delete body.id;const x=await fetch('api/requests',{method:'POST',headers:API_H,body:JSON.stringify(body)});if(!x.ok)throw new Error('create');const {request}=await x.json();snapReq.set(request.id,jr(request));return request}
 const busy=()=>document.querySelector('#modalBackdrop.show')||['INPUT','SELECT','TEXTAREA'].includes(document.activeElement?.tagName);
-async function pullServer(first){try{const r=await fetch(API+'?_='+Date.now(),{headers:API_H,cache:'no-store'});if(r.status===401&&me){showAuth({});return false}if(!r.ok||!(r.headers.get('content-type')||'').includes('json'))return false;const d=await r.json();if(typeof d.rev!=='number')return false;serverMode=true;
+async function pullServer(first){try{const r=await fetch(API+'?rev='+(first?-1:serverRev)+'&_='+Date.now(),{headers:API_H,cache:'no-store'});if(r.status===401&&me){showAuth({});return false}if(!r.ok||!(r.headers.get('content-type')||'').includes('json'))return false;const d=await r.json();if(typeof d.rev!=='number')return false;serverMode=true;if(d.unchanged){setSyncState(true);if(!first)pushServer();return true}
  if(d.rev!==serverRev&&!pushing&&!(busy()&&!first)){const openId=document.querySelector('#drawer.show')?window.__openReq:null;applyServer(d);render();if(openId)openDrawer(openId)}
  if(first)pushServer();
  setSyncState(true);if(!first)pushServer();return true}catch(e){if(serverMode)setSyncState(false);return false}}
