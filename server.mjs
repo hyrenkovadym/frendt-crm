@@ -23,7 +23,10 @@ const DB_FILE = join(DATA_DIR, 'frendt-crm.db');
 
 /* __EMBEDDED_HTML__ */
 const HTML_FILE = join(here, 'public', 'index.html');
-const getHtml = () => (typeof EMBEDDED_HTML === 'string' ? EMBEDDED_HTML : readFileSync(HTML_FILE, 'utf8'));
+const getHtml = (nonce = '') => {
+  const html = typeof EMBEDDED_HTML === 'string' ? EMBEDDED_HTML : readFileSync(HTML_FILE, 'utf8');
+  return nonce ? html.replace('<script>', `<script nonce="${nonce}">`) : html;
+};
 
 // ---------- База даних ----------
 const db = new DatabaseSync(DB_FILE);
@@ -183,13 +186,20 @@ const fail = (req) => { const k = ipOf(req); tries.set(k, [...(tries.get(k) || [
 const publicUser = (u) => u && ({ login: u.login, name: u.name, role: u.role });
 
 // ---------- HTTP ----------
-const send = (res, code, body, type = 'application/json; charset=utf-8') => { res.writeHead(code, { 'Content-Type': type, 'Cache-Control': 'no-store', 'X-Frame-Options': 'SAMEORIGIN', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'same-origin' }); res.end(typeof body === 'string' ? body : JSON.stringify(body)); };
-async function readJson(req) { let raw = ''; for await (const ch of req) { raw += ch; if (raw.length > 25e6) throw new Error('too large'); } return JSON.parse(raw || '{}'); }
+const send = (res, code, body, type = 'application/json; charset=utf-8', extra = {}) => { res.writeHead(code, { 'Content-Type': type, 'Cache-Control': 'no-store', 'X-Frame-Options': 'SAMEORIGIN', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'same-origin', 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains', 'Cross-Origin-Opener-Policy': 'same-origin', 'Permissions-Policy': 'camera=(), microphone=(), geolocation=()', ...extra }); res.end(typeof body === 'string' ? body : JSON.stringify(body)); };
+async function readJson(req) { let raw = ''; for await (const ch of req) { raw += ch; if (raw.length > 5e6) throw new Error('too large'); } return JSON.parse(raw || '{}'); }
+function trustedBrowserRequest(req) {
+  if (req.headers['sec-fetch-site'] === 'cross-site') return false;
+  const origin = req.headers.origin;
+  if (!origin) return true;
+  try { return new URL(origin).host === req.headers.host; } catch { return false; }
+}
 
 createServer(async (req, res) => {
   try {
     const url = new URL(req.url, 'http://localhost');
     const p = url.pathname;
+    if (p.startsWith('/api/') && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method) && !trustedBrowserRequest(req)) return send(res, 403, { error: 'Blocked cross-site request' });
     if (p === '/api/health') return send(res, 200, { ok: true });
     // --- вхід ---
     if (p === '/api/me' && req.method === 'GET') { const me = whoami(req); return send(res, me ? 200 : 401, me ? { user: publicUser(me) } : { error: 'auth', setup: !U.count.get().n, setupAllowed: !U.count.get().n && isLocal(req) }); }
@@ -203,7 +213,7 @@ createServer(async (req, res) => {
       if (limited(req)) return send(res, 429, { error: 'Забагато спроб. Спробуйте за 15 хвилин' });
       const b = await readJson(req); const u = U.get.get(cleanLogin(b.login));
       if (!u || !checkPass(b.password, u.pass)) { fail(req); return send(res, 401, { error: 'Неправильний логін або пароль' }); }
-      startSession(req, res, u.login); return send(res, 200, { user: publicUser(u) });
+      tries.delete(ipOf(req)); startSession(req, res, u.login); return send(res, 200, { user: publicUser(u) });
     }
     if (p === '/api/logout' && req.method === 'POST') { const t = cookies(req).frendt_sid; if (t) U.sDel.run(t); res.setHeader('Set-Cookie', 'frendt_sid=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0'); return send(res, 200, { ok: true }); }
     if (p.startsWith('/api/')) {
@@ -228,7 +238,11 @@ createServer(async (req, res) => {
       if (p === '/api/requests' && req.method === 'POST') { const rec = createRequest({ ...(await readJson(req)), author: me.name }, me.login); return send(res, 200, { request: rec, rev: rev() }); }
       return send(res, 404, { error: 'Not found' });
     }
-    if (p === '/' || p === '/index.html') return send(res, 200, getHtml(), 'text/html; charset=utf-8');
+    if (p === '/' || p === '/index.html') {
+      const nonce = randomBytes(18).toString('base64url');
+      const csp = `default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'self'; form-action 'self'; script-src 'self' 'nonce-${nonce}' https://docs.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data:; connect-src 'self' https://docs.google.com; upgrade-insecure-requests`;
+      return send(res, 200, getHtml(nonce), 'text/html; charset=utf-8', { 'Content-Security-Policy': csp });
+    }
     return send(res, 404, 'Not found', 'text/plain');
   } catch (e) { console.error(e); return send(res, 400, { error: e.message }); }
 }).listen(PORT, HOST, () => {
