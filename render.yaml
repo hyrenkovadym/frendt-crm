@@ -18,6 +18,7 @@ services:
         value: VolodymyrHirenko
       - key: CRM_PASSWORD
         sync: false
+    # Keep the SQLite database and daily backups across deploys.
     disk:
       name: frendt-crm-data
       mountPath: /var/data
