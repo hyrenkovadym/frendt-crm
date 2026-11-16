@@ -858,6 +858,33 @@ async function accountModal(){const m=document.querySelector('#modal');const adm
  try{draw((await api('api/users')).users)}catch(x){list.textContent=x.message}
  uf.onsubmit=async e=>{e.preventDefault();const v=Object.fromEntries(new FormData(uf));try{draw((await api('api/users','POST',v)).users);uf.reset();toast('Збережено',`${v.name} (${v.login})`)}catch(x){toast('Не збережено',x.message)}};
  const xi=m.querySelector('#xlsxInput');xi.onchange=async()=>{const f=xi.files[0];if(!f)return;const st=m.querySelector('#importState');st.className='import-state';st.textContent='Читаю файл…';try{const res=await importXlsx(await f.arrayBuffer());st.classList.add('ok');st.innerHTML=`Перенесено: <b>${res.requests}</b> заявок, <b>${res.clients}</b> клієнтів, етапів і № ФР з «Канбану»: <b>${res.kanban}</b>.`;toast('Імпорт виконано',`${res.requests} заявок · ${res.clients} клієнтів`)}catch(err){st.classList.add('bad');st.textContent='Не вдалося прочитати: '+err.message}xi.value=''}}
+function importHtmlRequests(text){
+ const match=String(text||'').match(/const\s+seed\s*=\s*(\[[\s\S]*?\])\s*;\s*const\s+SEED_CLIENTS\s*=/);
+ if(!match)throw new Error('У HTML не знайдено список заявок');
+ let incoming;try{incoming=JSON.parse(match[1])}catch(e){throw new Error('Список заявок у HTML пошкоджений')}
+ if(!Array.isArray(incoming)||!incoming.length)throw new Error('У HTML немає заявок');
+ const seen=new Set(),current=new Map(requests.map(r=>[Number(r.id),r]));let added=0,updated=0,unchanged=0;
+ const imported=incoming.map(raw=>{
+  const id=Number(raw?.id);if(!Number.isInteger(id)||id<1)throw new Error('Є заявка без коректного номера');
+  if(seen.has(id))throw new Error(`Номер заявки ${id} повторюється`);seen.add(id);
+  const before=current.get(id),next={...(before||{}),...raw,id};
+  if(!before)added++;else if(jr(before)===jr(next))unchanged++;else updated++;
+  return next
+ });
+ const importedIds=new Set(imported.map(r=>r.id));
+ const removed=requests.filter(r=>!importedIds.has(Number(r.id))).map(r=>Number(r.id));
+ pendingDel.requests=[...new Set([...pendingDel.requests.filter(id=>!importedIds.has(Number(id))),...removed])];
+ requests=imported.sort((a,b)=>b.id-a.id);saveDel();save();render();
+ return{total:imported.length,added,updated,unchanged,removed:removed.length}
+}
+function attachHtmlRequestImport(){
+ const m=document.querySelector('#modal'),xlsx=m?.querySelector('#xlsxInput');if(!xlsx||m.querySelector('#htmlRequestsInput'))return;
+ const label=document.createElement('label');label.className='file-btn';label.textContent='Перенести лише заявки з HTML';
+ const input=document.createElement('input');input.type='file';input.id='htmlRequestsInput';input.accept='.html,text/html';label.appendChild(input);
+ const state=m.querySelector('#importState');state?.before(label);
+ input.onchange=async()=>{const f=input.files?.[0];if(!f)return;if(state){state.className='import-state';state.textContent='Читаю заявки з HTML…'}try{const res=importHtmlRequests(await f.text());if(state){state.classList.add('ok');state.innerHTML=`Основну таблицю замінено: <b>${res.total}</b> заявок. Додано: <b>${res.added}</b>, оновлено: <b>${res.updated}</b>, без змін: <b>${res.unchanged}</b>, прибрано старих: <b>${res.removed}</b>. Клієнти, акаунти й налаштування не змінені.`}toast('Основну таблицю заявок замінено',`${res.total} заявок · решта бази не змінена`)}catch(err){if(state){state.classList.add('bad');state.textContent='Не вдалося прочитати: '+err.message}}input.value=''}
+}
+new MutationObserver(attachHtmlRequestImport).observe(document.querySelector('#modal'),{childList:true,subtree:true});
 async function boot(){let r=null;try{r=await fetch('api/me',{headers:API_H,cache:'no-store'})}catch(e){}
  if(!r||!(r.headers.get('content-type')||'').includes('json')){render();return}
  const d=await r.json().catch(()=>({}));
