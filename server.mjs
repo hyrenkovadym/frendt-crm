@@ -47,6 +47,8 @@ const q = {
   bump: db.prepare(`UPDATE meta SET v = CAST(v AS INTEGER) + 1 WHERE k='rev'`),
   allReq: db.prepare(`SELECT data FROM requests ORDER BY id DESC`),
   allCli: db.prepare(`SELECT data FROM clients ORDER BY rowid`),
+  getReq: db.prepare(`SELECT data FROM requests WHERE id = ?`),
+  getCli: db.prepare(`SELECT data FROM clients WHERE edrpou = ?`),
   getDicts: db.prepare(`SELECT data FROM dicts WHERE k='custom'`),
   maxId: db.prepare(`SELECT COALESCE(MAX(id), 0) AS m FROM requests`),
   upReq: db.prepare(`INSERT INTO requests (id, data, updated_at, rev) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET data=excluded.data, updated_at=excluded.updated_at, rev=excluded.rev`),
@@ -92,6 +94,48 @@ function state() {
 // Зберегти лише змінені записи (заявки — за номером, клієнти — за ЄДРПОУ)
 function sync(body, who = '') {
   return tx(() => {
+    const bases = body.bases && typeof body.bases === 'object' ? body.bases : null;
+    if (bases) {
+      const conflicts = { requests: [], clients: [], dicts: false };
+      const requestBases = bases.requests && typeof bases.requests === 'object' ? bases.requests : {};
+      const clientBases = bases.clients && typeof bases.clients === 'object' ? bases.clients : {};
+      const checkBase = (hasBase, base, current) => hasBase && ((base === null && current !== null) || (typeof base === 'string' && current !== base));
+      for (const it of Array.isArray(body.requests) ? body.requests : []) {
+        if (!it || it.id == null) continue;
+        const key = String(Number(it.id));
+        const current = q.getReq.get(Number(it.id))?.data ?? null;
+        if (checkBase(Object.hasOwn(requestBases, key), requestBases[key], current)) conflicts.requests.push(Number(it.id));
+      }
+      for (const it of Array.isArray(body.clients) ? body.clients : []) {
+        const key = String(it?.edrpou ?? '').trim();
+        if (!key) continue;
+        const current = q.getCli.get(key)?.data ?? null;
+        if (checkBase(Object.hasOwn(clientBases, key), clientBases[key], current)) conflicts.clients.push(key);
+      }
+      const del = body.deleted || {};
+      for (const id of Array.isArray(del.requests) ? del.requests : []) {
+        const key = String(Number(id));
+        const current = q.getReq.get(Number(id))?.data ?? null;
+        if (checkBase(Object.hasOwn(requestBases, key), requestBases[key], current)) conflicts.requests.push(Number(id));
+      }
+      for (const raw of Array.isArray(del.clients) ? del.clients : []) {
+        const key = String(raw).trim();
+        const current = q.getCli.get(key)?.data ?? null;
+        if (checkBase(Object.hasOwn(clientBases, key), clientBases[key], current)) conflicts.clients.push(key);
+      }
+      if (body.dicts && Object.hasOwn(bases, 'dicts')) {
+        const current = q.getDicts.get()?.data ?? null;
+        conflicts.dicts = checkBase(true, bases.dicts, current);
+      }
+      conflicts.requests = [...new Set(conflicts.requests)];
+      conflicts.clients = [...new Set(conflicts.clients)];
+      if (conflicts.requests.length || conflicts.clients.length || conflicts.dicts) {
+        const error = new Error('Запис уже змінив інший користувач');
+        error.status = 409;
+        error.conflicts = conflicts;
+        throw error;
+      }
+    }
     q.bump.run(); const r = rev(); const t = now();
     for (const it of Array.isArray(body.requests) ? body.requests : []) {
       if (!it || it.id == null) continue;
@@ -249,7 +293,10 @@ createServer(async (req, res) => {
       return send(res, 200, getHtml(nonce), 'text/html; charset=utf-8', { 'Content-Security-Policy': csp });
     }
     return send(res, 404, 'Not found', 'text/plain');
-  } catch (e) { console.error(e); return send(res, 400, { error: e.message }); }
+  } catch (e) {
+    if (e.status === 409) return send(res, 409, { error: e.message, conflicts: e.conflicts, ...state() });
+    console.error(e); return send(res, 400, { error: e.message });
+  }
 }).listen(PORT, HOST, () => {
   console.log(`FRENDT CRM OK: http://${HOST === '0.0.0.0' ? '127.0.0.1' : HOST}:${PORT}`);
   console.log(`База даних: ${DB_FILE}`);
