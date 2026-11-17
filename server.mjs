@@ -23,6 +23,15 @@ const DB_FILE = join(DATA_DIR, 'frendt-crm.db');
 
 /* __EMBEDDED_HTML__ */
 const HTML_FILE = join(here, 'public', 'index.html');
+const LEADS_FILE = join(here, 'leads.json');
+let LEADS_JSON = null;
+const getLeadsJson = () => {
+  if (LEADS_JSON === null) {
+    const leads = existsSync(LEADS_FILE) ? JSON.parse(readFileSync(LEADS_FILE, 'utf8')) : [];
+    LEADS_JSON = JSON.stringify({ leads });
+  }
+  return LEADS_JSON;
+};
 const getHtml = (nonce = '') => {
   const html = typeof EMBEDDED_HTML === 'string' ? EMBEDDED_HTML : readFileSync(HTML_FILE, 'utf8');
   return nonce ? html.replace('<script>', `<script nonce="${nonce}">`) : html;
@@ -263,6 +272,10 @@ createServer(async (req, res) => {
     if (p.startsWith('/api/')) {
       const me = whoami(req); if (!me) return send(res, 401, { error: 'auth' });
       const admin = me.role === 'admin';
+      if (p === '/api/leads' && req.method === 'GET') {
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'private, max-age=300', 'X-Content-Type-Options': 'nosniff' });
+        return res.end(getLeadsJson());
+      }
       if (p === '/api/password' && req.method === 'POST') { const b = await readJson(req); const u = U.get.get(me.login); if (!checkPass(b.old, u.pass)) return send(res, 400, { error: 'Поточний пароль неправильний' }); if (String(b.password || '').length < 6) return send(res, 400, { error: 'Новий пароль — від 6 символів' }); U.pass.run(hashPass(b.password), me.login); return send(res, 200, { ok: true }); }
       if (p === '/api/users') {
         if (!admin) return send(res, 403, { error: 'Лише для адміністратора' });

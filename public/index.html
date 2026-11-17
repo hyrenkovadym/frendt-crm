@@ -453,6 +453,47 @@ body.locked .app,body.locked header,body.locked aside,body.locked main{visibilit
 .board-bar>div:hover,.board-bar.drag>div{background:#007a30}
 .board-bar.drag>div{cursor:grabbing}
 
+/* ---- Лідогенерація та єдиний пошук ---- */
+.nav-sub{padding:18px 12px 10px}
+.lead-wrap{overflow:auto;border:1px solid #e1ebe4;border-radius:14px;background:#fff;max-height:70vh}
+.lead-table{width:100%;border-collapse:collapse;font-size:13px}
+.lead-table th{position:sticky;top:0;background:#f0f7f2;z-index:1;text-align:left;font:700 11px/1.2 var(--hd);text-transform:uppercase;letter-spacing:.04em;color:#3d5a46;padding:10px 10px;border-bottom:1px solid #dcebe1;white-space:nowrap}
+.lead-table td{padding:9px 10px;border-bottom:1px solid #eef3ef;vertical-align:top;line-height:1.4}
+.lead-table tr.lead-row,.lead-table tr.click{cursor:pointer}
+.lead-table tr.lead-row:hover td,.lead-table tr.click:hover td{background:#f6fbf7}
+.lead-table tr.open td{background:#f0f9f3}
+.lead-table .num{color:#8a8a8a;font-variant-numeric:tabular-nums}
+.lead-table .nowrap{white-space:nowrap}
+.lead-prod{min-width:220px;max-width:340px}
+.lead-com{min-width:280px;max-width:520px;color:#444}
+.lead-table mark{background:#ffe680;color:inherit;border-radius:3px;padding:0 1px}
+.lead-model{display:grid;grid-template-columns:repeat(3,1fr) auto;gap:12px;align-items:end;margin-bottom:16px}
+.lead-model label{display:grid;gap:6px;font:600 13px/1.2 var(--hd);color:#00953b}
+.lead-model input{height:44px;border:1px solid #cfd8d2;border-radius:12px;padding:0 12px;font:inherit;font-size:14px}
+.lead-model input:focus{outline:2px solid #00953b;border-color:#00953b}
+.res-h{display:flex;align-items:center;gap:10px;margin:22px 0 10px;font:700 16px/1.2 var(--hd)}
+.search-sum{background:#f0f7f2;border:1px solid #dcebe1;border-radius:12px;padding:12px 16px;font-size:14px}
+.more-row{display:flex;justify-content:center;margin:14px 0}
+.count-pill{display:inline-block;background:#e3f3e8;color:#00953b;border-radius:99px;padding:4px 10px;font:700 12px/1 var(--hd)}
+@media(max-width:900px){.lead-model{grid-template-columns:1fr}}
+
+.lead-table td{overflow-wrap:anywhere}
+.lead-sum{min-width:120px;max-width:180px}.lead-cur{min-width:80px;max-width:140px}.lead-date{min-width:96px;max-width:150px}
+.lead-table td:nth-child(3){min-width:150px}
+.lead-page{display:block}
+.lead-table{width:max-content;min-width:100%}
+.lead-table td{white-space:normal;font-size:13px;padding:9px 10px}
+.lead-table td.nowrap{white-space:nowrap}
+.lead-model{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:16px}
+
+.one-search{display:flex;align-items:center;gap:12px;background:#fff;border:2px solid #00953b;border-radius:16px;padding:0 16px;height:60px;margin-bottom:16px;box-shadow:0 8px 24px rgba(0,149,59,.10)}
+.one-search svg{width:24px;height:24px;fill:none;stroke:#00953b;stroke-width:2.2;flex:none}
+.one-search input{flex:1;border:0;outline:0;font:500 17px/1 var(--bd,inherit);height:100%;background:transparent}
+.one-search button{border:0;background:#eef6f0;color:#00953b;width:32px;height:32px;border-radius:50%;font-size:20px;cursor:pointer}
+.lead-table td:nth-child(3){max-width:320px}
+.lead-table td:nth-child(5){max-width:260px}
+.lead-table td.lead-list{white-space:nowrap;font-variant-numeric:tabular-nums}
+
 </style>
 </head>
 <body>
@@ -460,7 +501,7 @@ body.locked .app,body.locked header,body.locked aside,body.locked main{visibilit
     <div class="logo"><a class="logo-link" href="#" aria-label="FRENDT CRM"><svg viewBox="0 0 313.00 45.99" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="FRENDT"><path fill="currentColor" d="M 14.81 11.04 L 14.81 17.64 L 34.17 17.64 L 34.17 28.22 L 14.81 28.22 L 14.81 45.99 L 0.00 45.99 L 0.00 0.00 L 37.33 0.00 L 37.33 11.04 Z M 14.81 11.04"/><path fill="currentColor" d="M 267.90 0.01 L 267.90 11.77 L 283.07 11.77 L 283.07 45.99 L 297.90 45.99 L 297.90 11.77 L 312.99 11.77 L 312.99 0.01 Z M 267.90 0.01"/><path fill="currentColor" d="M 86.14 38.85 L 80.93 29.12 L 79.65 26.75 C 80.11 26.58 80.52 26.42 80.93 26.17 C 83.14 25.19 84.87 23.75 86.14 21.95 C 86.22 21.91 86.26 21.83 86.31 21.74 C 87.82 19.45 88.60 16.90 88.60 14.11 C 88.60 11.57 88.03 9.23 86.80 7.06 C 86.59 6.69 86.38 6.36 86.14 6.03 C 85.03 4.35 83.48 2.96 81.51 1.93 C 81.34 1.85 81.14 1.73 80.93 1.65 C 78.71 0.54 76.09 0.01 73.01 0.01 L 44.76 0.01 L 44.76 45.98 L 59.60 45.98 L 59.60 29.21 L 65.10 29.21 L 73.30 45.98 L 89.95 45.98 Z M 72.27 17.76 C 71.49 18.58 70.51 18.99 69.32 18.99 L 59.60 18.99 L 59.60 10.51 L 69.32 10.51 C 70.51 10.51 71.49 10.92 72.27 11.69 C 73.10 12.51 73.50 13.50 73.50 14.69 C 73.50 15.92 73.10 16.95 72.27 17.76"/><path fill="currentColor" d="M 209.19 0.01 L 209.19 45.98 L 196.23 45.98 L 176.82 23.67 L 176.82 45.98 L 163.21 45.98 L 163.21 0.01 L 176.12 0.01 L 195.53 22.65 L 195.53 0.01 Z M 209.19 0.01"/><path fill="currentColor" d="M 258.73 7.31 C 254.76 2.42 248.23 0.01 239.13 0.01 L 219.11 0.01 L 219.11 45.98 L 239.13 45.98 C 248.23 45.98 254.76 43.56 258.73 38.68 C 261.81 34.91 263.33 29.70 263.33 23.02 C 263.33 16.33 261.81 11.12 258.73 7.31 M 248.15 25.02 C 248.15 31.67 245.03 34.95 238.84 34.95 L 233.92 34.95 L 233.92 11.04 L 238.84 11.04 C 245.03 11.04 248.15 14.36 248.15 21.00 Z M 248.15 25.02"/><path fill="#00953b" d="M 149.84 10.59 L 97.37 10.59 L 97.37 0.01 L 155.79 0.01 Z M 149.84 10.59"/><path fill="#00953b" d="M 149.84 35.40 L 97.37 35.40 L 97.37 45.98 L 155.79 45.98 Z M 149.84 35.40"/><path fill="#00953b" d="M 145.81 28.22 L 97.39 28.22 L 97.39 17.64 L 145.81 17.64 L 142.87 22.99 Z M 145.81 28.22"/></svg></a><span>CRM</span></div>
     <label class="header-search">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
-      <input id="globalSearch" placeholder="Знайти заявку, клієнта, ЄДРПОУ">
+      <input id="globalSearch" placeholder="Пошук у заявках, клієнтах і лідах">
     </label>
     <div class="header-spacer"></div>
     <button class="header-icon" id="notifyBtn" aria-label="Сповіщення">
@@ -477,6 +518,8 @@ body.locked .app,body.locked header,body.locked aside,body.locked main{visibilit
       <button data-view="clients"><span><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.8c1.6.8 2.6 2.6 3 5.2"/></svg></span>База клієнтів</button>
       <button data-view="directory"><span><svg viewBox="0 0 24 24"><path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H20v15H5.5A1.5 1.5 0 0 0 4 19.5zM4 19.5A1.5 1.5 0 0 0 5.5 21H20v-3"/><path d="M8 7h8M8 11h6"/></svg></span>Довідник</button>
       <button data-view="directions"><span><svg viewBox="0 0 24 24"><path d="M9 6h12M9 12h12M9 18h12"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/></svg></span>Списки для напрямків</button>
+      <div class="section-title nav-sub">Лідогенерація</div>
+      <button data-view="leads"><span><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14h18M9 9v11"/></svg></span>Статистика лідогенераторів</button>
     </nav>
     <div class="automation-state"><i></i><div><b>Локальний тестовий режим</b><small>Дані зберігаються в цьому браузері</small></div></div>
     
@@ -652,10 +695,69 @@ function formed(r){
 }
 const generated=r=>formed(r).text;
 
+/* ---------- Лідогенерація: таблиця «Для лідогенераторів» (аркуші «Завдання лідогенератори» і «Модель пошуку інформації по клієнту») ---------- */
+/* рядок: [ЄДРПОУ, Компанія, Область, Контакт, Телефон, Відповідальний, Товар, Сума, Валюта, Дата початку, Коментар] */
+let LEADS=[];
+const L_HEAD=['ЄДРПОУ','Контрагент','Область','Адреса','ПІБ ЛПР','Робочий телефон 1','Робочий телефон 2','Робочий e-mail','Відповідальний менеджер','Коментар по даним клієнта','Дата заявки','Категорія','Напрямок','Торгова марка','Валюта','Сума','Умови оплати','Умови поставки','Організація для розрахунку','№ документу (ФР)','Етап','Коментар'];
+/* колонки ті самі, що в «Списку заявок» */
+/* рядок аркуша лідогенераторів → колонки списку заявок (Товар → Напрямок, Дата початку → Дата заявки) */
+function leadToRow(r){const ph=String(r[4]||'').split(/\s*,\s*/).filter(Boolean);return [r[0]||'',r[1]||'',r[2]||'','',r[3]||'',ph[0]||'',ph.slice(1).join(', '),'',r[5]||'','',r[9]||'','',r[6]||'','',r[8]||'',r[7]||'','','','','','',r[10]||'']}
+/* кожна заявка CRM — теж рядок цієї таблиці */
+function reqToLead(r){const c=lookup(r.edrpou)||r;const row=[r.edrpou||'',c.client||r.client||'',c.region||r.region||'',c.address||r.address||'',c.contact||r.contact||'',c.phone1||r.phone1||'',c.phone2||r.phone2||'',c.email||r.email||'',c.manager||r.manager||'',c.clientComment||'',r.date||'',r.category||'',r.direction||'',r.brand||'',r.currency||'',has(r.amount)?money2(r.amount).replace(',00',''):'',r.payment||'',r.delivery||'',r.organization||'',r.doc||'',r.stage||'',r.comment||''];row.reqId=r.id;return row}
+let LEADS_ROWS=null,LEADS_SRC=null;
+let ALL=[];
+let leadIdx=null;const digits=s=>String(s||'').replace(/\D/g,'');
+function buildLeadIdx(){if(LEADS_SRC!==LEADS){LEADS_SRC=LEADS;LEADS_ROWS=LEADS.map(leadToRow)}ALL=[...requests.slice().sort((a,b)=>b.id-a.id).map(reqToLead),...LEADS_ROWS];leadIdx=ALL.map(r=>({t:r.join(' ').toLowerCase(),p:digits(r[5])+' '+digits(r[6]),e:String(r[0]||'').toLowerCase(),c:String(r[1]||'').toLowerCase()}))}
+const phoneKey=s=>{const d=digits(s);return d.length>=9?d.slice(-9):d};
+let leadState={q:'',resp:'',region:'',limit:100,open:new Set()};
+let leadSearch={phone:'',edrpou:'',company:''};
+const hl=(text,q)=>{const t=esc(text);if(!q)return t;const words=q.split(/\s+/).filter(w=>w.length>1).map(w=>w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));if(!words.length)return t;try{return t.replace(new RegExp('('+words.map(w=>esc(w)).join('|')+')','gi'),'<mark>$1</mark>')}catch(e){return t}};
+function leadMatch(i,q){const x=leadIdx[i];const dq=digits(q);if(dq.length>=6&&x.p.includes(dq.slice(-9)))return true;return q.split(/\s+/).filter(Boolean).every(w=>x.t.includes(w))}
+const L_CLS={1:'b',3:'lead-com',5:'nowrap',6:'nowrap',9:'lead-com',12:'lead-prod',15:'lead-sum',21:'lead-com'};
+/* довгі переліки через кому (дати, суми, валюти) — по 4 в рядок */
+function chunk4(v){const it=v.split(/\s*,\s+/).map(x=>x.trim());if(it.length<5)return null;const dateOrNum=x=>x===''||/^[\d\s.,]+$/.test(x);const rep=new Set(it).size<=Math.ceil(it.length/2);if(!(it.every(dateOrNum)||(rep&&it.every(x=>x.length<=25))))return null;const sep=it.some(x=>/\d,\d/.test(x))?' , ':', ';const out=[];for(let i=0;i<it.length;i+=4)out.push(it.slice(i,i+4).join(sep));out.sep=sep.trimEnd();return out}
+function leadRow(r,i,n,q){const open=leadState.open.has(i);const cell=(v,k)=>{v=String(v||'');const ch=chunk4(v);if(ch)return `<td class="lead-list">${ch.map(x=>hl(x,q)).join(ch.sep+'<br>')}</td>`;const long=L_CLS[k]==='lead-com';const t=long&&!open&&v.length>140?v.slice(0,140)+'…':v;let h=hl(t,q);if(long&&open)h=h.replace(/\n/g,'<br>');if(k===20&&v){const s=stage(v);h=`<span class="stage-pill" style="--sc:${s.color}">${esc(v)}</span>`}if(L_CLS[k]==='b')return `<td><b>${h}</b></td>`;return `<td${L_CLS[k]&&L_CLS[k]!=='b'?` class="${L_CLS[k]}"`:''}>${h}</td>`};
+ return `<tr class="lead-row${open?' open':''}" ${r.reqId?`data-open-req="${r.reqId}"`:`data-lead="${i}"`}><td class="num">${n}</td>${r.map(cell).join('')}</tr>`}
+function leadTable(list,q){return `<div class="lead-wrap"><table class="lead-table"><thead><tr><th>№ п/п</th>${L_HEAD.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${list.map(([r,i],k)=>leadRow(r,i,k+1,q)).join('')}</tbody></table></div>`}
+function ensureLeads(){buildLeadIdx()}
+function renderLeads(){ensureLeads();const q=leadState.q.trim().toLowerCase();const resp=[...new Set(ALL.map(r=>r[8]).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'uk'));const reg=[...new Set(ALL.map(r=>r[2]).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'uk'));
+ const list=[];ALL.forEach((r,i)=>{if(leadState.resp&&r[8]!==leadState.resp)return;if(leadState.region&&r[2]!==leadState.region)return;if(q&&!leadMatch(i,q))return;list.push([r,i])});
+ root.innerHTML=`<section class="lead-page"><div class="toolbar"><input id="leadQ" placeholder="Пошук у таблиці: компанія, контакт, телефон, товар, коментар…" value="${esc(leadState.q)}"><select id="leadResp"><option value="">Усі відповідальні</option>${resp.map(x=>`<option${x===leadState.resp?' selected':''}>${esc(x)}</option>`).join('')}</select><select id="leadReg"><option value="">Усі області</option>${reg.map(x=>`<option${x===leadState.region?' selected':''}>${esc(x)}</option>`).join('')}</select><span class="count-pill">${list.length} записів</span></div>${LEADS.length?'':'<p class="page-note">Дані лідогенерації завантажуються…</p>'}${leadTable(list.slice(0,leadState.limit),q)}${list.length>leadState.limit?`<div class="more-row"><button class="cancel-btn" id="leadMore">Показати ще (${list.length-leadState.limit})</button></div>`:''}<p class="page-note">Натисніть на рядок, щоб побачити повний коментар. Дані з таблиці «Для лідогенераторів».</p></section>`;
+ const qi=root.querySelector('#leadQ');qi.oninput=()=>{leadState.q=qi.value;leadState.limit=100;const p=qi.selectionStart;renderLeads();bindLeadRows();const n=root.querySelector('#leadQ');n.focus();n.setSelectionRange(p,p)};
+ root.querySelector('#leadResp').onchange=e=>{leadState.resp=e.target.value;leadState.limit=100;render()};root.querySelector('#leadReg').onchange=e=>{leadState.region=e.target.value;leadState.limit=100;render()};
+ const m=root.querySelector('#leadMore');if(m)m.onclick=()=>{leadState.limit+=200;render()};}
+function bindLeadRows(){root.querySelectorAll('[data-lead]').forEach(tr=>tr.onclick=()=>{const i=+tr.dataset.lead;leadState.open.has(i)?leadState.open.delete(i):leadState.open.add(i);const n=tr.querySelector('.num').textContent;const q=currentView==='leads'?leadState.q.trim().toLowerCase():currentView==='search'?query:'';tr.outerHTML=leadRow(ALL[i],i,n,q);bindLeadRows()})}
+/* «Модель пошуку інформації по клієнту»: пошук за номером телефону, ЄДРПОУ або назвою компанії */
+function leadModelResults(){ensureLeads();const ph=phoneKey(leadSearch.phone),ed=leadSearch.edrpou.trim().toLowerCase(),co=leadSearch.company.trim().toLowerCase();if(!ph&&!ed&&!co)return null;const out=[],off=requests.length;LEADS_ROWS.forEach((r,j)=>{const i=off+j,x=leadIdx[i];if(ph&&!(x.p&&x.p.includes(ph)))return;if(ed&&!x.e.includes(ed))return;if(co&&!co.split(/\s+/).filter(Boolean).every(w=>x.c.includes(w.replace(/[",.]/g,''))||x.c.replace(/[",.]/g,'').includes(w.replace(/[",.]/g,''))))return;out.push([r,i])});return out}
+function renderLeadSearch(){const res=leadModelResults();const crm=res?crmMatches():null;
+ root.innerHTML=`<section class="lead-page"><div class="lead-model"><label>Пошук за номером телефону<input id="lsPhone" value="${esc(leadSearch.phone)}" placeholder="+380…"></label><label>Пошук за ЄДРПОУ<input id="lsEd" value="${esc(leadSearch.edrpou)}" placeholder="ЄДРПОУ"></label><label>Пошук за назвою компанії<input id="lsCo" value="${esc(leadSearch.company)}" placeholder="Назва компанії"></label><button class="cancel-btn" id="lsClear">Очистити</button></div>
+ ${res===null?'<p class="page-note">Введіть номер телефону, ЄДРПОУ або назву компанії — покажемо всі записи з таблиці лідогенераторів, а також заявки й клієнтів CRM.</p>':`<h3 class="res-h">Таблиця лідогенераторів <span class="count-pill">${res.length}</span></h3>${res.length?leadTable(res.slice(0,500),(leadSearch.company||'').toLowerCase()):'<p class="page-note">Нічого не знайдено.</p>'}${crm}`}</section>`;
+ const upd=(id,k)=>{const el=root.querySelector(id);el.oninput=()=>{leadSearch[k]=el.value;const p=el.selectionStart;renderLeadSearch();bindLeadRows();bindSearchLinks();const n=root.querySelector(id);n.focus();n.setSelectionRange(p,p)}};upd('#lsPhone','phone');upd('#lsEd','edrpou');upd('#lsCo','company');
+ root.querySelector('#lsClear').onclick=()=>{leadSearch={phone:'',edrpou:'',company:''};render()}}
+function crmMatches(){const ph=phoneKey(leadSearch.phone),ed=leadSearch.edrpou.trim().toLowerCase(),co=leadSearch.company.trim().toLowerCase().replace(/[",.]/g,'');const okC=c=>{if(ph&&![c.phone1,c.phone2].some(p=>phoneKey(p)&&phoneKey(p).includes(ph)))return false;if(ed&&!String(c.edrpou||'').toLowerCase().includes(ed))return false;if(co&&!String(c.client||'').toLowerCase().replace(/[",.]/g,'').includes(co))return false;return true};
+ const cl=clients.filter(okC);const rq=requests.filter(okC);return searchSections(rq,cl,'')}
+/* ---------- Єдиний пошук по всьому ---------- */
+function reqText(r){return [r.id,'№'+r.id,r.edrpou,r.client,r.contact,r.phone1,r.phone2,r.email,r.manager,r.region,r.district,r.address,r.category,r.direction,r.brand,r.comment,r.doc,r.stage,r.date,r.amount].join(' ').toLowerCase()}
+function cliText(c){return [c.edrpou,c.client,c.contact,c.phone1,c.phone2,c.email,c.manager,c.region,c.district,c.address,c.clientComment].join(' ').toLowerCase()}
+function textMatch(t,phones,q){const dq=digits(q);if(dq.length>=6&&phones.some(p=>digits(p).includes(dq.slice(-9))))return true;return q.split(/\s+/).filter(Boolean).every(w=>t.includes(w))}
+function searchSections(rq,cl,q){const st=s=>STAGES.find(x=>x.id===s)||{color:'#ccc',fg:'#000'};
+ return `<h3 class="res-h">Заявки CRM <span class="count-pill">${rq.length}</span></h3>${rq.length?`<div class="lead-wrap"><table class="lead-table"><thead><tr><th>Клієнт</th><th>ЄДРПОУ</th><th>Напрямок</th><th>Сума</th><th>№ ФР</th><th>Етап</th><th>Менеджер</th></tr></thead><tbody>${rq.slice(0,300).map(r=>{const s=st(r.stage);return `<tr class="click" data-open-req="${r.id}"><td><b>${hl(r.client||'',q)}</b></td><td>${hl(r.edrpou,q)}</td><td>${hl((r.category||'')+' · '+(r.direction||''),q)}</td><td class="nowrap">${esc(fmt(r.amount,r.currency))}</td><td>${hl(r.doc||'—',q)}</td><td><span class="stage-tag" style="background:${s.color};color:${s.fg}">${esc(r.stage)}</span></td><td>${esc(r.manager||'')}</td></tr>`}).join('')}</tbody></table></div>`:'<p class="page-note">Нічого не знайдено.</p>'}
+ <h3 class="res-h">Клієнти CRM <span class="count-pill">${cl.length}</span></h3>${cl.length?`<div class="lead-wrap"><table class="lead-table"><thead><tr><th>ЄДРПОУ</th><th>Контрагент</th><th>Область</th><th>ПІБ ЛПР</th><th>Телефон</th><th>E-mail</th><th>Менеджер</th></tr></thead><tbody>${cl.slice(0,300).map(c=>`<tr class="click" data-open-cli="${esc(c.edrpou)}"><td>${hl(c.edrpou,q)}</td><td><b>${hl(c.client||'',q)}</b></td><td>${esc(c.region||'')}</td><td>${hl(c.contact||'',q)}</td><td class="nowrap">${hl([c.phone1,c.phone2].filter(Boolean).join(', '),q)}</td><td>${hl(c.email||'',q)}</td><td>${esc(c.manager||'')}</td></tr>`).join('')}</tbody></table></div>`:'<p class="page-note">Нічого не знайдено.</p>'}`}
+let searchLimit=100;
+function renderSearch(){ensureLeads();const q=query.trim();
+ const box=`<div class="one-search"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg><input id="oneQ" placeholder="Пошук" value="${esc(query)}" autocomplete="off">${q?'<button type="button" id="oneClear" title="Очистити">×</button>':''}</div>`;
+ if(!q){root.innerHTML=`<section class="lead-page">${box}<p class="page-note">Пишіть що завгодно — пошук іде одразу по заявках, клієнтах CRM і всій таблиці лідогенераторів.</p></section>`;bindOneSearch();return}
+ const rq=requests.filter(r=>textMatch(reqText(r),[r.phone1,r.phone2],q));const cl=clients.filter(c=>textMatch(cliText(c),[c.phone1,c.phone2],q));ensureLeads();const ld=[];ALL.forEach((r,i)=>{if(!r.reqId&&leadMatch(i,q))ld.push([r,i])});
+ root.innerHTML=`<section class="lead-page">${box}<div class="search-sum">Знайдено за «<b>${esc(q)}</b>»: заявок — <b>${rq.length}</b>, клієнтів — <b>${cl.length}</b>, записів лідогенерації — <b>${ld.length}</b></div>${searchSections(rq,cl,q)}<h3 class="res-h">Таблиця лідогенераторів <span class="count-pill">${ld.length}</span></h3>${ld.length?leadTable(ld.slice(0,searchLimit),q):'<p class="page-note">Нічого не знайдено.</p>'}${ld.length>searchLimit?`<div class="more-row"><button class="cancel-btn" id="srchMore">Показати ще (${ld.length-searchLimit})</button></div>`:''}</section>`;
+ const m=root.querySelector('#srchMore');if(m)m.onclick=()=>{searchLimit+=200;render()};bindOneSearch()}
+let oneTimer=null;
+function bindOneSearch(){const i=root.querySelector('#oneQ');if(!i)return;i.oninput=()=>{clearTimeout(oneTimer);oneTimer=setTimeout(()=>{query=i.value.toLowerCase();document.querySelector('#globalSearch').value=i.value;searchLimit=100;const p=i.selectionStart;render();const n=root.querySelector('#oneQ');n.focus();n.setSelectionRange(p,p)},180)};const c=root.querySelector('#oneClear');if(c)c.onclick=()=>{query='';document.querySelector('#globalSearch').value='';render();root.querySelector('#oneQ').focus()}}
+function bindSearchLinks(){root.querySelectorAll('[data-open-req]').forEach(t=>t.onclick=()=>openDrawer(+t.dataset.openReq));root.querySelectorAll('[data-open-cli]').forEach(t=>t.onclick=()=>openClientModal(t.dataset.openCli))}
+
 const visible=()=>requests.filter(r=>{const c=cl(r);return(!query||[c.client,r.edrpou,r.doc,c.manager,r.category,r.direction].join(' ').toLowerCase().includes(query))&&(!managerFilter||c.manager===managerFilter)&&(!categoryFilter||r.category===categoryFilter)});
 
-function setView(view){currentView=view;document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===view));const t={kanban:'Заявки',requests:'Додавання заявок',clients:'База клієнтів',directory:'Довідник',directions:'Списки для напрямків'};document.querySelector('#pageTitle').textContent=t[view];render()}
-function render(){const oldBoard=root.querySelector('.board');if(oldBoard)boardScroll=oldBoard.scrollLeft;({kanban:renderKanban,requests:renderRequests,clients:renderClients,directory:renderDirectory,directions:renderDirections}[currentView])();bind()}
+function setView(view){currentView=view;document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===view));const t={kanban:'Заявки',requests:'Додавання заявок',clients:'База клієнтів',directory:'Довідник',directions:'Списки для напрямків',leads:'Статистика лідогенераторів',leadsearch:'Пошук',search:'Пошук'};document.querySelector('#pageTitle').textContent=t[view]||'CRM';render()}
+function render(){const oldBoard=root.querySelector('.board');if(oldBoard)boardScroll=oldBoard.scrollLeft;const fn={kanban:renderKanban,requests:renderRequests,clients:renderClients,directory:renderDirectory,directions:renderDirections,leads:renderLeads,leadsearch:renderLeadSearch,search:renderSearch}[currentView]||renderKanban;fn();bind();bindLeadRows();bindSearchLinks()}
 function toolbar(active='kanban'){return `<div class="toolbar"><div class="view-tabs"><button class="${active==='kanban'?'active':''}" data-mode="kanban">КАНБАН</button><button class="${active==='list'?'active':''}" data-mode="list">СПИСОК</button></div><input id="pageSearch" placeholder="Пошук…" value="${esc(query)}"><select id="managerFilter">${opts(MANAGERS,managerFilter,'Усі менеджери')}</select><select id="categoryFilter">${opts(CATEGORIES,categoryFilter,'Усі категорії')}</select><div class="grow"></div><span class="counter">${visible().length} заявок</span></div>`}
 
 /* ---------- КАНБАН ---------- */
@@ -746,9 +848,10 @@ function closeDrawer(){document.querySelector('#drawer').classList.remove('show'
 function openRequestModal(){document.querySelector('#modal').innerHTML=`<div class="modal-head"><div><h2>Внесення заявки менеджером</h2><p>Автоматично: база клієнтів → сформована заявка → канбан</p></div><div class="grow"></div><button class="close" data-close-modal>×</button></div>${requestForm()}<div class="modal-preview"><pre id="livePreview"></pre></div>`;document.querySelector('#modalBackdrop').classList.add('show');bindRequestForm(document.querySelector('#modal #requestForm'),closeModal);document.querySelector('[data-close-modal]').onclick=closeModal}
 function closeModal(){document.querySelector('#modalBackdrop').classList.remove('show');document.querySelector('#modal').innerHTML=''}
 function toast(title,msg=''){const t=document.querySelector('#toast');t.querySelector('strong').textContent=title;t.querySelector('small').textContent=msg;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),2800)}
-document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>setView(b.dataset.view));
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{if(query&&b.dataset.view!=='leadsearch'){query='';document.querySelector('#globalSearch').value=''}setView(b.dataset.view)});
 document.querySelector('#addRequestBtn').onclick=openRequestModal;
-document.querySelector('#globalSearch').oninput=e=>{query=e.target.value.toLowerCase();render()};
+let prevView='kanban';
+document.querySelector('#globalSearch').oninput=e=>{query=e.target.value.toLowerCase();searchLimit=100;if(query.trim()){if(currentView!=='search'&&currentView!=='leadsearch'){prevView=currentView;setView('search')}else render()}else if(currentView==='search')setView(prevView);else render()};
 document.querySelector('#notifyBtn').onclick=()=>toast('Локальний тестовий режим','Синхронізацію з Google Таблицею ще не підключено');
 document.querySelector('#drawerBackdrop').onclick=closeDrawer;
 document.querySelector('#modalBackdrop').onclick=e=>{if(e.target.id==='modalBackdrop')closeModal()};
@@ -891,6 +994,7 @@ async function boot(){let r=null;try{r=await fetch('api/me',{headers:API_H,cache
  if(r.status===401){document.body.classList.add('locked');showAuth(d);return}
  if(!r.ok||!d.user){render();return}
  me=d.user;updateUserBlock();render();
+ fetch('api/leads',{headers:API_H,cache:'no-store'}).then(r=>r.ok?r.json():null).then(x=>{if(x&&Array.isArray(x.leads)){LEADS=x.leads;leadIdx=null;if(['leads','leadsearch','search'].includes(currentView))render()}}).catch(()=>{});
  const ok=await pullServer(true);if(ok){syncTimer=setInterval(()=>pullServer(),3000);addEventListener('focus',()=>pullServer());document.addEventListener('visibilitychange',()=>{if(!document.hidden)pullServer()})}}
 boot();
 
