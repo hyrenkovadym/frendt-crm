@@ -46,6 +46,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS clients  (edrpou TEXT PRIMARY KEY, data TEXT NOT NULL, updated_at TEXT NOT NULL, rev INTEGER NOT NULL);
   CREATE TABLE IF NOT EXISTS dicts    (k TEXT PRIMARY KEY, data TEXT NOT NULL, updated_at TEXT NOT NULL);
   CREATE TABLE IF NOT EXISTS meta     (k TEXT PRIMARY KEY, v TEXT NOT NULL);
+  CREATE TABLE IF NOT EXISTS tasks    (id INTEGER PRIMARY KEY, manager TEXT NOT NULL DEFAULT '', data TEXT NOT NULL, updated_at TEXT NOT NULL);
   CREATE TABLE IF NOT EXISTS history  (id INTEGER PRIMARY KEY AUTOINCREMENT, at TEXT NOT NULL, kind TEXT NOT NULL, key TEXT NOT NULL, data TEXT NOT NULL);
   CREATE TABLE IF NOT EXISTS users    (login TEXT PRIMARY KEY, name TEXT NOT NULL, role TEXT NOT NULL, pass TEXT NOT NULL, created_at TEXT NOT NULL);
   CREATE TABLE IF NOT EXISTS sessions (token TEXT PRIMARY KEY, login TEXT NOT NULL, expires INTEGER NOT NULL);
@@ -69,6 +70,35 @@ const q = {
 const rev = () => q.rev.get().v;
 const now = () => new Date().toISOString();
 function tx(fn) { db.exec('BEGIN IMMEDIATE'); try { const r = fn(); db.exec('COMMIT'); return r; } catch (e) { db.exec('ROLLBACK'); throw e; } }
+
+// ---------- Задачі менеджерів (окрема таблиця; заявки й клієнти не змінюються) ----------
+const TASKS_FILE = join(here, 'tasks.json');
+const TASK_KEYS = ['edrpou','company','region','district','address','lpr','phone','phones','email','bitrix','task','c1','c2','ordered','manager','callDate'];
+const cleanTask = (body) => { const out = {}; for (const key of TASK_KEYS) { const value = String(body?.[key] ?? '').trim(); if (value) out[key] = value; } return out; };
+const taskQ = {
+  all: db.prepare('SELECT id, data FROM tasks ORDER BY id'),
+  mine: db.prepare('SELECT id, data FROM tasks WHERE manager = ? ORDER BY id'),
+  get: db.prepare('SELECT id, manager, data FROM tasks WHERE id = ?'),
+  put: db.prepare('INSERT OR REPLACE INTO tasks (id, manager, data, updated_at) VALUES (?, ?, ?, ?)'),
+  max: db.prepare('SELECT COALESCE(MAX(id), 0) AS m FROM tasks'),
+  count: db.prepare('SELECT COUNT(*) AS n FROM tasks'),
+  duplicate: db.prepare("SELECT id, manager, data FROM tasks WHERE json_extract(data, '$.edrpou') = ? AND id <> ? LIMIT 1")
+};
+(function seedTasksOnce() {
+  if (db.prepare("SELECT v FROM meta WHERE k='tasks_seed_v1'").get()) return;
+  const rows = existsSync(TASKS_FILE) ? JSON.parse(readFileSync(TASKS_FILE, 'utf8')) : [];
+  if (!Array.isArray(rows) || !rows.length) return;
+  const timestamp = now();
+  tx(() => {
+    if (!taskQ.count.get().n) for (const row of rows) {
+      const task = {}; TASK_KEYS.forEach((key, index) => { if (row[index + 1]) task[key] = row[index + 1]; });
+      taskQ.put.run(Number(row[0]), task.manager || '', JSON.stringify(task), timestamp);
+    }
+    db.prepare("INSERT OR REPLACE INTO meta (k, v) VALUES ('tasks_seed_v1', ?)").run(timestamp);
+  });
+  console.log(`Задачі менеджерів: ${taskQ.count.get().n}`);
+})();
+const taskRows = (rows) => rows.map(row => ({ id: row.id, ...JSON.parse(row.data) }));
 
 // ---------- Перше заповнення: усі заявки й клієнти з Google-таблиці «Облік заявок FRENDT» ----------
 /* __EMBEDDED_SEED__ */
@@ -290,13 +320,35 @@ createServer(async (req, res) => {
         }
         if (req.method === 'DELETE') { if (!u) return send(res, 404, { error: 'Немає такого користувача' }); if (login === me.login) return send(res, 400, { error: 'Не можна видалити себе' }); if (u.role === 'admin' && U.admins.get().n < 2) return send(res, 400, { error: 'Має залишитися хоча б один адміністратор' }); U.sDelUser.run(login); U.del.run(login); return send(res, 200, { users: U.all.all() }); }
       }
+      if (p === '/api/tasks') {
+        if (req.method === 'GET') return send(res, 200, { tasks: taskRows(admin ? taskQ.all.all() : taskQ.mine.all(me.name)) });
+        const body = await readJson(req); const task = cleanTask(body); if (!admin) task.manager = me.name;
+        const duplicateError = (id, oldCode = '') => {
+          if (!task.edrpou || task.edrpou === oldCode) return null;
+          const duplicate = taskQ.duplicate.get(task.edrpou, id); if (!duplicate) return null;
+          const saved = JSON.parse(duplicate.data);
+          return `Задача з ЄДРПОУ ${task.edrpou} вже є — «${saved.company || ''}» (${duplicate.manager || 'без менеджера'}). Однаковий ЄДРПОУ зберегти не можна.`;
+        };
+        if (req.method === 'POST') {
+          const error = duplicateError(0); if (error) return send(res, 409, { error });
+          const id = taskQ.max.get().m + 1; taskQ.put.run(id, task.manager || '', JSON.stringify(task), now());
+          return send(res, 200, { task: { id, ...task } });
+        }
+        if (req.method === 'PUT') {
+          const id = Number(body.id); const old = taskQ.get.get(id); if (!old) return send(res, 404, { error: 'Немає такої задачі' });
+          if (!admin && old.manager !== me.name) return send(res, 403, { error: 'Це задача іншого менеджера' });
+          const error = duplicateError(id, JSON.parse(old.data).edrpou || ''); if (error) return send(res, 409, { error });
+          taskQ.put.run(id, task.manager || '', JSON.stringify(task), now());
+          return send(res, 200, { task: { id, ...task } });
+        }
+      }
       if (p === '/api/data' && req.method === 'GET') {
         const knownRev = Number(url.searchParams.get('rev'));
         const currentRev = rev();
         if (Number.isFinite(knownRev) && knownRev === currentRev) return send(res, 200, { rev: currentRev, unchanged: true });
         return send(res, 200, { ...state(), me: publicUser(me) });
       }
-      if ((p === '/api/data' || p === '/api/sync') && (req.method === 'PUT' || req.method === 'POST')) { const b = await readJson(req); if (!admin) { delete b.deleted; } sync(b, me.login); return send(res, 200, state()); }
+      if ((p === '/api/data' || p === '/api/sync') && (req.method === 'PUT' || req.method === 'POST')) { const b = await readJson(req); if (!admin) { delete b.deleted; delete b.dicts; } sync(b, me.login); return send(res, 200, state()); }
       if (p === '/api/requests' && req.method === 'POST') { const rec = createRequest({ ...(await readJson(req)), author: me.name }, me.login); return send(res, 200, { request: rec, rev: rev() }); }
       return send(res, 404, { error: 'Not found' });
     }

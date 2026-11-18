@@ -494,6 +494,33 @@ body.locked .app,body.locked header,body.locked aside,body.locked main{visibilit
 .lead-table td:nth-child(5){max-width:260px}
 .lead-table td.lead-list{white-space:nowrap;font-variant-numeric:tabular-nums}
 
+/* ---- Задачі менеджерів ---- */
+.t-add,.t-save{width:auto!important;height:44px!important;margin:0!important;white-space:nowrap}
+#tWho{height:44px;border:1px solid var(--line-2);border-radius:12px;padding:0 12px;font:600 14px/1 var(--hd);background:#fff;min-width:220px}
+#tQ{flex:1;min-width:180px}
+.t-sum{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.t-sum span{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--line-2);border-radius:99px;padding:6px 12px;font:600 12px/1.2 var(--hd)}
+.t-sum i{width:9px;height:9px;border-radius:3px;background:var(--c)}
+.t-sum b{color:var(--c)}
+.task-card{cursor:pointer}.task-card h4{margin:8px 0 2px}
+.t-days{font:700 12px/1 var(--hd)}
+.t-line{font-size:13px;color:#333;margin-top:4px}
+.t-foot{display:flex;flex-wrap:wrap;align-items:center;gap:6px;justify-content:space-between;margin-top:8px;font-size:12px;color:#6f6f6f}
+.t-ind{background:#fff3e0;color:#b45309;border-radius:99px;padding:3px 8px;font:600 11px/1.2 var(--hd)}
+.t-ok{background:#e6f4eb;color:#00953b;border-radius:99px;padding:3px 8px;font:600 11px/1.2 var(--hd)}
+.t-ind-c{color:#b45309;font-weight:600;white-space:nowrap}
+.t-more{width:100%;margin-top:4px}
+.t-calc{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:14px 0 4px;font-size:13px}
+#taskForm .wide{grid-column:1/-1}#taskForm textarea{width:100%;resize:vertical}
+.t-err{display:block;width:100%;background:#fdecea;color:#c62828;border-radius:10px;padding:8px 12px;font-weight:600}
+.t-table td.t-long{white-space:normal;min-width:220px;max-width:340px;line-height:1.4}
+.t-table td:nth-child(3){min-width:180px;max-width:280px;white-space:normal}
+.t-table td:nth-child(7),.t-table td:nth-child(9),.t-table td:nth-child(10){white-space:normal;max-width:240px}
+.t-table td:nth-child(8){min-width:130px;max-width:200px;white-space:normal}
+.float-win{position:fixed;top:80px;left:calc(50% - min(380px,47vw));width:min(760px,94vw);max-height:86vh;z-index:120;border:1px solid #d7e6dc}
+.float-win .modal-head{user-select:none}
+.win-rs{resize:both;overflow:auto;min-width:340px;min-height:110px}
+
 </style>
 </head>
 <body>
@@ -518,6 +545,8 @@ body.locked .app,body.locked header,body.locked aside,body.locked main{visibilit
       <button data-view="clients"><span><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.8c1.6.8 2.6 2.6 3 5.2"/></svg></span>База клієнтів</button>
       <button data-view="directory"><span><svg viewBox="0 0 24 24"><path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H20v15H5.5A1.5 1.5 0 0 0 4 19.5zM4 19.5A1.5 1.5 0 0 0 5.5 21H20v-3"/><path d="M8 7h8M8 11h6"/></svg></span>Довідник</button>
       <button data-view="directions"><span><svg viewBox="0 0 24 24"><path d="M9 6h12M9 12h12M9 18h12"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/></svg></span>Списки для напрямків</button>
+      <div class="section-title nav-sub">Менеджери</div>
+      <button data-view="tasks"><span><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m3.5 6 1.5 1.5L7.5 5M3.5 12l1.5 1.5L7.5 11M3.5 18l1.5 1.5L7.5 17"/></svg></span>Задачі менеджерів</button>
       <div class="section-title nav-sub">Лідогенерація</div>
       <button data-view="leads"><span><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14h18M9 9v11"/></svg></span>Статистика лідогенераторів</button>
     </nav>
@@ -746,18 +775,119 @@ function searchSections(rq,cl,q){const st=s=>STAGES.find(x=>x.id===s)||{color:'#
 let searchLimit=100;
 function renderSearch(){ensureLeads();const q=query.trim();
  const box=`<div class="one-search"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg><input id="oneQ" placeholder="Пошук" value="${esc(query)}" autocomplete="off">${q?'<button type="button" id="oneClear" title="Очистити">×</button>':''}</div>`;
- if(!q){root.innerHTML=`<section class="lead-page">${box}<p class="page-note">Пишіть що завгодно — пошук іде одразу по заявках, клієнтах CRM і всій таблиці лідогенераторів.</p></section>`;bindOneSearch();return}
- const rq=requests.filter(r=>textMatch(reqText(r),[r.phone1,r.phone2],q));const cl=clients.filter(c=>textMatch(cliText(c),[c.phone1,c.phone2],q));ensureLeads();const ld=[];ALL.forEach((r,i)=>{if(!r.reqId&&leadMatch(i,q))ld.push([r,i])});
- root.innerHTML=`<section class="lead-page">${box}<div class="search-sum">Знайдено за «<b>${esc(q)}</b>»: заявок — <b>${rq.length}</b>, клієнтів — <b>${cl.length}</b>, записів лідогенерації — <b>${ld.length}</b></div>${searchSections(rq,cl,q)}<h3 class="res-h">Таблиця лідогенераторів <span class="count-pill">${ld.length}</span></h3>${ld.length?leadTable(ld.slice(0,searchLimit),q):'<p class="page-note">Нічого не знайдено.</p>'}${ld.length>searchLimit?`<div class="more-row"><button class="cancel-btn" id="srchMore">Показати ще (${ld.length-searchLimit})</button></div>`:''}</section>`;
+ if(!q){root.innerHTML=`<section class="lead-page">${box}<p class="page-note">Пишіть що завгодно — пошук іде одразу по заявках, клієнтах CRM, задачах менеджерів і всій таблиці лідогенераторів.</p></section>`;bindOneSearch();return}
+ const rq=requests.filter(r=>textMatch(reqText(r),[r.phone1,r.phone2],q));const cl=clients.filter(c=>textMatch(cliText(c),[c.phone1,c.phone2],q));ensureLeads();const ld=[];ALL.forEach((r,i)=>{if(!r.reqId&&leadMatch(i,q))ld.push([r,i])});const ts=taskSearchSection(q);
+ root.innerHTML=`<section class="lead-page">${box}<div class="search-sum">Знайдено за «<b>${esc(q)}</b>»: заявок — <b>${rq.length}</b>, клієнтів — <b>${cl.length}</b>, задач — <b>${ts.n}</b>, записів лідогенерації — <b>${ld.length}</b></div>${searchSections(rq,cl,q)}${ts.html}<h3 class="res-h">Таблиця лідогенераторів <span class="count-pill">${ld.length}</span></h3>${ld.length?leadTable(ld.slice(0,searchLimit),q):'<p class="page-note">Нічого не знайдено.</p>'}${ld.length>searchLimit?`<div class="more-row"><button class="cancel-btn" id="srchMore">Показати ще (${ld.length-searchLimit})</button></div>`:''}</section>`;
  const m=root.querySelector('#srchMore');if(m)m.onclick=()=>{searchLimit+=200;render()};bindOneSearch()}
 let oneTimer=null;
 function bindOneSearch(){const i=root.querySelector('#oneQ');if(!i)return;i.oninput=()=>{clearTimeout(oneTimer);oneTimer=setTimeout(()=>{query=i.value.toLowerCase();document.querySelector('#globalSearch').value=i.value;searchLimit=100;const p=i.selectionStart;render();const n=root.querySelector('#oneQ');n.focus();n.setSelectionRange(p,p)},180)};const c=root.querySelector('#oneClear');if(c)c.onclick=()=>{query='';document.querySelector('#globalSearch').value='';render();root.querySelector('#oneQ').focus()}}
-function bindSearchLinks(){root.querySelectorAll('[data-open-req]').forEach(t=>t.onclick=()=>openDrawer(+t.dataset.openReq));root.querySelectorAll('[data-open-cli]').forEach(t=>t.onclick=()=>openClientModal(t.dataset.openCli))}
+function bindSearchLinks(){root.querySelectorAll('[data-open-req]').forEach(t=>t.onclick=()=>openDrawer(+t.dataset.openReq));root.querySelectorAll('[data-open-cli]').forEach(t=>t.onclick=()=>openClientModal(t.dataset.openCli));root.querySelectorAll('[data-task]').forEach(t=>t.onclick=()=>openTask(+t.dataset.task))}
+
+/* ===== Задачі менеджерів — таблиця «Зведені задачі менеджерів» (аркуш «Всі завдання» + «Довідник») ===== */
+const T_KEYS=['edrpou','company','region','district','address','lpr','phone','phones','email','bitrix','task','c1','c2','ordered','manager','callDate'];
+const T_HEAD=['ЄДРПОУ','Компанія','Область','Район','Адреса','ЛРП','Номер телефону ЛПР','Інші номери телефонів','Робочий e-mail','Контакт або компанія із Bitrix','Завдання','Коментар 1','Коментар 2','Що вже замовляв клієнт','Менеджер','Коли дзвонити','Залишок днів до дзвінка','Статус часу','Індікатор заповнення'];
+const T_LISTS={"regions":["Вінницька","Волинська","Дніпропетровська","Донецька","Житомирська","Закарпатська","Запорізька","Івано-Франківська","Київська","Кіровоградська","Луганська","Львівська","Миколаївська","Одеська","Полтавська","Рівненська","Сумська","Тернопільська","Харківська","Херсонська","Хмельницька","Черкаська","Чернівецька","Чернігівська","Іноземна компанія","Самовивіз"],"districts":["Акимовский","Александрийский","Александровский","Алешковский","Амвросиевский","Ананьевский","Андрушевский","Антрацитовский","Апостоловский","Арбузинский","Арцизский","Ахтырский","Балаклейский","Балтский","Барановский","Барвенковский","Барский","Барышевский","Бахмачский","Бахмутский","Баштанский","Белгород-Днестровский","Беловодский","Белогорский","Белозерский","Белокуракинский","Белопольский","Белоцерковский","Бельмацкий","Беляевский","Бердичевский","Бердянский","Береговский","Бережанский","Березанский","Березанський","Березнеговатский","Березновский","Березовский","Бериславский","Бершадский","Біляївський район","Благовещенский","Близнюковский","Бобринецкий","Бобровицкий","Богодуховский","Богородчанский","Богуславский","Бойковский","Болградский","Борзнянський","Бориспольский","Боровской","Бородянский","Борщевский","Братский","Броварской","Бродовский","Брусиловский","Бурынский","Бусский","Бучацкий","Валковский","Варвинский","Васильевский","Васильковский","Великоалександровский","Великобагачанский","Великобелозерский","Великоберезнянский","Великобурлуцкий","Великолепетихский","Великомихайловский","Великоновоселковский","Великописаревский","Верхнеднепровский","Верхнерогачикский","Верховинский","Веселиновский","Веселовский","Вижницкий","Винницкий","Виноградовский","Виньковецкий","Витовский","Вінницький район","Владимир-Волынский","Владимирецкий","Вознесенский","Волновахский","Воловецкий","Володарский","Волочисский","Волчанский","Вольнянский","Врадиевский","Высокопольский","Вышгородский","Гадяцький","Гайворонский","Гайсинский","Галицкий","Генический","Герцаевский","Глобинский","Глуховский","Глыбокский","Головановский","Голопристанский","Голосіївський","Горностаевский","Городенковский","Городищенский","Городнянский","Городокский","Гороховский","Гощанский","Гребенковський","Гуляйпольский","Гусятинский","Двуречанский","Демидовский","Деражнянский","Дергачевский","Диканьский","Днепровский","Добровеличковский","Добропольский","Довжанский","Долинский","Доманевский","Драбовский","Дрогобычский","Дубенский","Дубровицкий","Дунаевецкий","Еланецкий","Емельчинский","Жашковский","Жидачовский","Житомирский","Жмеринский","Жолковский","Закарпатская","Залещицкий","Запорожский","Заречненский","Заставновский","Захарьевский","Зачепиловский","Збаражский","Зборовский","Звенигородский","Згуровский","Здолбуновский","Зеньковский","Змиевский","Знаменский","Золотоніський","Золотоношский","Золочевский","Иваничевский","Иванковский","Ивано-Франковск","Ивановский","Измаилский","Изюмский","Изяславский","Ильинецкий","Иршавский","Ичнянский","Кагарлыцкий","Казанковский","Казатинский","Каланчакский","Калиновский","Калушский","Каменка-Бугский","Каменский","Каменско-Днепровский","Камень-Каширский","Камянец-Подольский","Каневский","Карловский","Катеринопольский","Каховский","Кегичевский","Кельменецкий","Киверцовский","Киево-Святошинский","Киевский","Килийский","Кицманский","Кобеляцкий","Ковельский","Кодымский","Козелецкий","Козельщинский","Козовский","Коломакский","Коломыйский","Компанеевский","Конотопский","Константиновский","Корецкий","Коропский","Коростенский","Коростышевский","Корсунь-Шевченковский","Корюковский","Косовский","Костопольский","Котелевский","Красиловский","Красногвардійський","Красноградский","Краснодонский","Краснокутский","Краснопольский","Кременецкий","Кременский","Кременчугский","Кривоозерский","Криворожский","Криничанский","Кролевецкий","Кропивницкий","Крыжопольский","Куликовский","Купянский","Лановецкий","Лебединский","Летичевский","Лиманский","Липовецкий","Липоводолинский","Лисичанский","Литинский","Лозовской","Локачинский","Лохвицкий","Лубенский","Луганский","Лугинский","Лутугинский","Луцкий","Лысянский","Любарский","Любашевский","Любешовский","Любомльский","Магдалиновский","Макаровский","Малинский","Маловисковский","Мангушский","Маневичский","Маньковский","Марковский","Марьинский","Машевский","Межгорский","Межевский","Мелитопольский","Меловской","Менский","Миргородский","Мироновский","Михайловский","місто Київ","Млиновский","Могилёв-Подольский","Монастырисский","Монастырищенский","Мостисский","Мукачевский","Мурованокуриловецкий","Надворнянский","Народичский","Недригайловский","Нежинский","Немировский","Нижнесерогозский","Николаевский","Николаевcкий","Никольский","Никопольский","Новгород-Северский","Новгородковский","Новоазовский","Новоайдарский","Новоархангельский","Новобугский","Нововодолажский","Нововоронцовский","Новоград-Волынский","Новомиргородский","Новомосковский","Новониколаевский","Новоодесский","Новопсковск","Новосанжарский","Новоселицкий","Новотроицкий","Новоукраинский","Новоушицкий","Носовский","Обуховский","Овидиопольский","Овручский","Окнянский","Олевский","Олександрівський","Ольшанский","Онуфриевский","Оратовский","Ореховский","Оржицкий","Острожский","Очаковский","П'ятихатський","Павлоградский","Первомайский","Перевальский","Перемышлянский","Перечинский","Переяслав-Хмельницкий","Песчанский","Петриковский","Петровский","Петропавловский","Печенежский","Пирятинский","Погребищенский","Подволочиский","Подгаецкий","Подольский","Покровский","Полесский","Пологовский","Полонский","Полтавский","Попаснянский","Попельнянский","Приазовский","Прилуцкий","Приморский","Пулинский","Пустомытовский","Путивльский","Путильский","Пятихатский","Радеховский","Радивиловский","Радомышльский","Раздельнянский","Ратновский","Раховский","Ренийский","Репкинский","Решетиловский","Ровенский","Рогатинский","Рожищенский","Рожнятовский","Розовский","Рокитновский","Рокитнянский","Романовский","Роменский","Ружинский","Ружинський район","Савранский","Самборский","Саратский","Сарненский","Сахновщинский","Свалявский","Сватовский","Светловодский","Семеновский","Середино-Будский","Синельниковский","Скадовский","Сквирский","Сколевский","Славутский","Славяносербский","Славянский","Смелянский","Снигиревский","Сновский","Снятынский","Сокальский","Сокирянский","Солонянский","Сосницкий","Софиевский","Софіївський район","Сребнянский","Ставищенский","Станично-Луганский","Станично-Луганський","Старобельский","Старобешевский","Старовыжевский","Староконстантиновский","Старосамборский","Старосинявский","Сторожинецкий","Сторожинецький район","Стрыйский","Сумской","Талалаевский","Тальновский","Таращанский","Тарутинский","Татарбунарский","Теофипольский","Теплицкий","Теребовлянский","Терновка","Тернопольский","Тетиевский","Тлумачский","Токмакский","Томаковский","Томашпольский","Торецк","Троицкий","Тростянецкий","Тульчинский","Турийский","Турковский","Тывровский","Тысменицкий","Тячевский","Ужгородский","Уманский","Устиновский","Фастовский","Харьковский","Херсонский","Хмельницкий","Хорольский","Хорошевский","Хотинский","Христиновский","Хустский","Царичанський","Царичанський","Чаплинский","Чемеровецкий","Черкасский","Черневецкий","Черниговский","Чернівецький","Чернобаевский","Чернухинский","Черняховский","Чечельницкий","Чигиринский","Чортковский","Чугуевский","Чудновский","Чутовский","Шаргородский","Шахтерский","Шацкий","Шевченковский","Шепетовский","Широковский","Ширяевский","Шишацкий","Шосткинский","Шполянский","Шумский","Юрьевский","Яворовский","Яготинский","Ямпольский","Ярмолинецкий","Ясиноватский","Іноземна компанія","Самовивіз"],"managers":["Віктор Дуля","Максим Левченко","Олег Марійчук","Вадим Свирида"]};
+const T_LONG=['address','bitrix','task','c1','c2','ordered'],T_NOWRAP=['edrpou','callDate'];
+const T_STATUS=[
+ {id:'Завдання на сьогодні',color:'#00953b'},
+ {id:'Просточені завдання до 2 тижнів',color:'#f0a020'},
+ {id:'Прострочені завдання від 2 тижнів до місяця',color:'#e8662a'},
+ {id:'Прострочені завдання більше місяця',color:'#c62828'},
+ {id:'Майбутні завдання, через місяць і довше',color:'#7a8fa6'},
+ {id:'Завдання які будуть протягом місяця',color:'#2f7fd1'},
+ {id:'Внесу дату коли дзвонити',color:'#9e9e9e'}];
+let TASKS=([]).map(a=>{const o={id:a[0]};T_KEYS.forEach((k,i)=>{if(a[i+1])o[k]=a[i+1]});return o});
+const KEY_TASKS='frendt_tasks_srv';
+/* на сервері задачі не кешуються в браузері — щоб на спільному комп’ютері не лишались чужі задачі */
+const T_SRV=KEY_TASKS.endsWith('_srv');
+if(T_SRV){try{localStorage.removeItem(KEY_TASKS)}catch(e){}}else{try{const s=localStorage.getItem(KEY_TASKS);if(s){const x=JSON.parse(s);if(Array.isArray(x)&&x.length)TASKS=x}}catch(e){}}
+const saveTasksLocal=()=>{if(T_SRV)return;try{localStorage.setItem(KEY_TASKS,JSON.stringify(TASKS))}catch(e){}};
+/* формули таблиці */
+const tDate=s=>{const m=/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(String(s||'').trim());return m?Date.UTC(+m[3],m[2]-1,+m[1]):null};
+const todayUTC=()=>{const d=new Date();return Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())};
+function tDays(t){const x=tDate(t.callDate);return x===null?null:Math.round((x-todayUTC())/864e5)}
+function tStatus(t){const d=tDays(t);if(d===null)return 'Внесу дату коли дзвонити';if(d===0)return 'Завдання на сьогодні';if(d<0&&d>=-14)return 'Просточені завдання до 2 тижнів';if(d<-14&&d>=-30)return 'Прострочені завдання від 2 тижнів до місяця';if(d<-30)return 'Прострочені завдання більше місяця';if(d<=31)return 'Завдання які будуть протягом місяця';return 'Майбутні завдання, через місяць і довше'}
+function tInd(t){return !t.edrpou?'Внеси код ЄДРПОУ':!t.region?'Внеси Область':!t.district?'Внеси район':!t.lpr?'Внеси ПІБ ЛПР':''}
+const tDaysTxt=t=>{const d=tDays(t);return d===null||d===0?'':String(d).replace(/\B(?=(\d{3})+(?!\d))/g,' ')};
+const tStat=id=>T_STATUS.find(s=>s.id===id)||T_STATUS[6];
+/* хто що бачить: адміністратор — усіх або вибраного; менеджер — лише себе */
+const T_ME_KEY='frendt_task_me';
+const canAllTasks=()=>isAdmin();
+function myTaskName(){if(me)return me.name;try{return localStorage.getItem(T_ME_KEY)||''}catch{return ''}}
+const taskState={who:'',mode:'kanban',q:'',limit:{},listLimit:150};
+function taskManagers(){return [...new Set([...T_LISTS.managers,...TASKS.map(t=>t.manager).filter(Boolean)])]}
+function taskWho(){if(canAllTasks())return taskState.who;return myTaskName()}
+function taskText(t){return [t.edrpou,t.company,t.region,t.district,t.address,t.lpr,t.phone,t.phones,t.email,t.bitrix,t.task,t.c1,t.c2,t.ordered,t.manager,t.callDate].join(' ').toLowerCase()}
+function visibleTasks(){const w=taskWho();if(!canAllTasks()&&!w)return [];return TASKS.filter(t=>(!w||w==='*'||t.manager===w))}
+function taskFilter(list,q){q=(q||'').trim().toLowerCase();if(!q)return list;return list.filter(t=>textMatch(taskText(t),[t.phone,t.phones],q))}
+function taskCard(t){const s=tStat(tStatus(t)),ind=tInd(t),d=tDaysTxt(t);return `<article class="card task-card" data-task="${t.id}" style="--cc:${s.color}"><div class="card-top"><span class="category" style="--c:${s.color}">${esc(t.callDate||'без дати')}</span>${d?`<b class="t-days" style="color:${s.color}">${d} дн.</b>`:''}</div><h4>${esc(t.company||'—')}</h4><div class="doc">${esc(t.edrpou||'')}${t.region?' · '+esc(t.region):''}</div>${t.task?`<div class="direction"><b>Завдання:</b> ${esc(t.task)}</div>`:''}${t.lpr?`<div class="t-line">${esc(t.lpr)}</div>`:''}${t.phone?`<div class="t-line nowrap">${esc(t.phone)}</div>`:''}<div class="t-foot">${esc(t.manager||'')}${ind?`<span class="t-ind">${esc(ind)}</span>`:''}</div></article>`}
+function taskToolbar(){const all=canAllTasks(),w=taskWho(),mg=taskManagers();
+ const who=all?`<select id="tWho"><option value="">Усі менеджери</option>${mg.map(m=>`<option${m===w?' selected':''}>${esc(m)}</option>`).join('')}</select>`:me?`<select id="tWho" disabled><option>${esc(w)}</option></select>`:`<select id="tWhoSelf"><option value="">— Оберіть своє ПІБ —</option><option value="*"${w==='*'?' selected':''}>Усі менеджери</option>${mg.map(m=>`<option${m===w?' selected':''}>${esc(m)}</option>`).join('')}</select>`;
+ return `<div class="toolbar"><div class="view-tabs"><button class="${taskState.mode==='kanban'?'active':''}" data-tmode="kanban">КАНБАН</button><button class="${taskState.mode==='list'?'active':''}" data-tmode="list">СПИСОК</button></div>${who}<input id="tQ" placeholder="Пошук у задачах…" value="${esc(taskState.q)}" autocomplete="off"><button class="save-btn t-add" id="tAdd">+ Задача</button></div>`}
+function renderTasks(){const base=visibleTasks(),list=taskFilter(base,taskState.q);const w=taskWho();
+ if(!canAllTasks()&&!w){root.innerHTML=`<section class="page">${taskToolbar()}<p class="page-note">Оберіть своє ПІБ — і тут з’являться ваші задачі.${me?' Ваше ім’я в CRM не збігається з жодним менеджером у таблиці задач.':''}</p></section>`;bindTasks();return}
+ const by={};T_STATUS.forEach(s=>by[s.id]=[]);list.forEach(t=>by[tStatus(t)].push(t));
+ Object.values(by).forEach(a=>a.sort((x,y)=>(tDate(x.callDate)??9e15)-(tDate(y.callDate)??9e15)));
+ const sum=`<div class="t-sum">${T_STATUS.map(s=>`<span style="--c:${s.color}"><i></i>${esc(s.id)} <b>${by[s.id].length}</b></span>`).join('')}</div>`;
+ let body;
+ if(taskState.mode==='kanban'){body=`<div class="board t-board">${[T_STATUS[6],...T_STATUS.slice(0,6)].map(s=>{const a=by[s.id],lim=taskState.limit[s.id]||40;return `<div class="stage" style="--sc:${s.color}"><div class="stage-head"><i style="background:${s.color}"></i><h3>${esc(s.id)}</h3><span>${a.length}</span></div>${a.slice(0,lim).map(taskCard).join('')}${a.length>lim?`<button class="cancel-btn t-more" data-tmore="${esc(s.id)}">Показати ще (${a.length-lim})</button>`:''}</div>`}).join('')}</div><div class="board-bar"><div></div></div>`}
+ else{const rows=T_STATUS.flatMap(s=>by[s.id]);const q=taskState.q.trim();body=`<div class="lead-wrap"><table class="lead-table t-table"><thead><tr><th>№</th>${T_HEAD.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.slice(0,taskState.listLimit).map((t,n)=>{const s=tStat(tStatus(t));return `<tr class="click" data-task="${t.id}"><td class="num">${n+1}</td>${T_KEYS.map(k=>{const v=String(t[k]||''),ch=chunk4(v);if(ch)return `<td class="lead-list">${ch.map(x=>hl(x,q)).join(ch.sep+'<br>')}</td>`;if(T_LONG.includes(k))return `<td class="t-long">${hl(v,q).replace(/\n/g,'<br>')}</td>`;return `<td${T_NOWRAP.includes(k)?' class="nowrap"':''}>${k==='company'?'<b>':''}${hl(v,q)}${k==='company'?'</b>':''}</td>`}).join('')}<td class="nowrap">${tDaysTxt(t)}</td><td><span class="stage-pill" style="--sc:${s.color}">${esc(s.id)}</span></td><td class="t-ind-c">${esc(tInd(t))}</td></tr>`}).join('')}</tbody></table></div>${rows.length>taskState.listLimit?`<div class="more-row"><button class="cancel-btn" id="tListMore">Показати ще (${rows.length-taskState.listLimit})</button></div>`:''}`}
+ root.innerHTML=`<section class="page">${taskToolbar()}${sum}${body}</section>`;bindTasks();if(taskState.mode==='kanban')syncBoardBar()}
+let tTimer=null;
+function bindTasks(){root.querySelectorAll('[data-tmode]').forEach(b=>b.onclick=()=>{taskState.mode=b.dataset.tmode;render()});
+ const w=root.querySelector('#tWho');if(w&&!w.disabled)w.onchange=()=>{taskState.who=w.value;taskState.limit={};taskState.listLimit=150;render()};
+ const ws=root.querySelector('#tWhoSelf');if(ws)ws.onchange=()=>{try{localStorage.setItem(T_ME_KEY,ws.value)}catch(e){}render()};
+ const q=root.querySelector('#tQ');if(q)q.oninput=()=>{clearTimeout(tTimer);tTimer=setTimeout(()=>{taskState.q=q.value;const p=q.selectionStart;render();const n=root.querySelector('#tQ');n.focus();n.setSelectionRange(p,p)},200)};
+ root.querySelectorAll('[data-tmore]').forEach(b=>b.onclick=()=>{const k=b.dataset.tmore;taskState.limit[k]=(taskState.limit[k]||40)+100;render()});
+ const lm=root.querySelector('#tListMore');if(lm)lm.onclick=()=>{taskState.listLimit+=300;render()};
+ root.querySelectorAll('[data-task]').forEach(e=>e.onclick=()=>openTask(+e.dataset.task));
+ const a=root.querySelector('#tAdd');if(a)a.onclick=()=>openTask(0)}
+const tAllMode=()=>!me&&myTaskName()==='*';
+function canEditTask(t){return canAllTasks()||tAllMode()||!t.manager||t.manager===myTaskName()}
+const isoFromUA=s=>{const x=tDate(s);return x===null?'':new Date(x).toISOString().slice(0,10)};
+const uaFromIso=s=>/^\d{4}-\d\d-\d\d$/.test(s||'')?s.split('-').reverse().join('.'):'';
+/* вікна, які можна тягати за шапку; задача відкривається окремим вікном — поруч можна відкрити «Додати заявку» */
+function makeDraggable(win,handle){win.classList.add('win-rs');let sx,sy,ox,oy;handle.style.cursor='move';handle.onpointerdown=e=>{if(e.target.closest('button,input,select,textarea,a'))return;e.preventDefault();const m=/translate\((-?[\d.]+)px, *(-?[\d.]+)px\)/.exec(win.style.transform||'');ox=m?+m[1]:0;oy=m?+m[2]:0;sx=e.clientX;sy=e.clientY;handle.setPointerCapture(e.pointerId);handle.onpointermove=ev=>{win.style.transform=`translate(${ox+ev.clientX-sx}px,${oy+ev.clientY-sy}px)`};handle.onpointerup=()=>{handle.onpointermove=null}}}
+function taskWinEl(){let w=document.querySelector('#taskWin');if(!w){w=document.createElement('div');w.id='taskWin';w.className='modal float-win';document.body.appendChild(w)}w.style.transform='';return w}
+function closeTaskWin(){const w=document.querySelector('#taskWin');if(w)w.remove()}
+function openTask(id){const t=id?TASKS.find(x=>x.id===id):{manager:canAllTasks()?(taskState.who||''):tAllMode()?'':myTaskName()};if(!t)return;const ro=id&&!canEditTask(t);
+ const inp=(k,label,extra='')=>`<label>${label}<input name="${k}" value="${esc(t[k]||'')}"${extra}${ro?' readonly':''}></label>`;
+ const area=(k,label)=>`<label class="wide">${label}<textarea name="${k}" rows="2"${ro?' readonly':''}>${esc(t[k]||'')}</textarea></label>`;
+ const mg=taskManagers();
+ const win=taskWinEl();win.innerHTML=`<div class="modal-head"><div><h2>${id?esc(t.company||'Задача'):'Нова задача'}</h2><p>Тягніть за шапку, щоб пересунути вікно</p></div><div class="grow"></div><button class="close" data-close-task>×</button></div>
+ <form id="taskForm"><div class="form-grid">${inp('edrpou','ЄДРПОУ')}${inp('company','Компанія')}
+ <label>Область<input name="region" list="tRegList" value="${esc(t.region||'')}" autocomplete="off"${ro?' readonly':''}><datalist id="tRegList">${T_LISTS.regions.map(x=>`<option value="${esc(x)}">`).join('')}</datalist></label>
+ <label>Район<input name="district" list="tDisList" value="${esc(t.district||'')}" autocomplete="off"${ro?' readonly':''}><datalist id="tDisList">${T_LISTS.districts.map(x=>`<option value="${esc(x)}">`).join('')}</datalist></label>
+ ${inp('address','Адреса')}${inp('lpr','ЛРП')}${inp('phone','Номер телефону ЛПР')}${inp('phones','Інші номери телефонів')}${inp('email','Робочий e-mail')}${inp('bitrix','Контакт або компанія із Bitrix')}${inp('task','Завдання')}
+ <label>Менеджер<select name="manager"${ro||!(canAllTasks()||tAllMode())?' disabled':''}><option value=""></option>${mg.map(m=>`<option${m===t.manager?' selected':''}>${esc(m)}</option>`).join('')}</select></label>
+ <label>Коли дзвонити<input type="date" name="callDate" value="${isoFromUA(t.callDate)}"${ro?' readonly':''}></label>
+ ${area('c1','Коментар 1')}${area('c2','Коментар 2')}${area('ordered','Що вже замовляв клієнт')}
+ </div><div class="t-calc" id="tCalc"></div><div class="form-actions">${ro?'<span class="page-note">Це задача іншого менеджера — лише перегляд</span>':''}<div class="grow"></div><button type="button" class="cancel-btn" data-close-task>Скасувати</button>${ro?'':'<button class="save-btn t-save" type="submit">Зберегти</button>'}</div></form>`;
+ win.querySelectorAll('[data-close-task]').forEach(b=>b.onclick=closeTaskWin);makeDraggable(win,win.querySelector('.modal-head'));
+ const form=win.querySelector('#taskForm');const read=()=>{const o={};T_KEYS.forEach(k=>{const e=form.elements[k];if(!e)return;let v=String(e.value||'').trim();if(k==='callDate')v=uaFromIso(v);o[k]=v});if(!canAllTasks()&&!tAllMode())o.manager=t.manager||myTaskName();return o};
+ const calc=()=>{const o=read(),s=tStat(tStatus(o)),ind=tInd(o),d=tDays(o);document.querySelector('#tCalc').innerHTML=`<span class="stage-pill" style="--sc:${s.color}">${esc(s.id)}</span>${d!==null&&d!==0?`<span>Залишок днів до дзвінка: <b>${d}</b></span>`:''}${ind?`<span class="t-ind">${esc(ind)}</span>`:'<span class="t-ok">Заповнено</span>'}`};
+ form.oninput=calc;form.onchange=calc;calc();
+ const dupMsg=code=>{const d=TASKS.find(x=>x.id!==t.id&&x.edrpou===code);return `Задача з ЄДРПОУ ${code} вже є${d?` — «${d.company||''}» (${d.manager||'без менеджера'})`:''}. Однаковий ЄДРПОУ зберегти не можна.`};
+ const isDup=o=>o.edrpou&&o.edrpou!==(id?(t.edrpou||''):'')&&TASKS.some(x=>x.id!==t.id&&x.edrpou===o.edrpou);
+ const showErr=m=>{const c=document.querySelector('#tCalc');c.insertAdjacentHTML('afterbegin',`<span class="t-err">${esc(m)}</span>`);form.elements.edrpou?.focus()};
+ const apply=o=>{T_KEYS.forEach(k=>{if(o[k])t[k]=o[k];else delete t[k]});if(!id){TASKS.unshift(t)}saveTasksLocal();closeTaskWin();render();toast(id?'Задачу збережено':'Задачу додано',tStatus(t))};
+ form.oninput=()=>{calc();const o=read();if(isDup(o))showErr(dupMsg(o.edrpou))};
+ form.onsubmit=async e=>{e.preventDefault();if(ro)return;const o=read();calc();if(isDup(o)){showErr(dupMsg(o.edrpou));return}
+  if(me){try{const r=await fetch('api/tasks',{method:id?'PUT':'POST',headers:API_H,body:JSON.stringify(id?{...o,id}:o)});const x=await r.json().catch(()=>({}));if(r.status===409){showErr(x.error||dupMsg(o.edrpou));return}if(!r.ok){toast('Не вдалося зберегти задачу',x.error||'Перевірте зв’язок із сервером');return}if(!id)t.id=x.task.id}catch(err){toast('Немає зв’язку із сервером CRM','Задачу не збережено — спробуйте ще раз');return}}
+  else if(!id)t.id=Math.max(0,...TASKS.map(x=>x.id))+1;
+  apply(o)}}
+/* нова доба — статуси й залишок днів перераховуються самі, навіть якщо сторінка відкрита з учора */
+let tDay=todayUTC();setInterval(()=>{const d=todayUTC();if(d!==tDay){tDay=d;if(['tasks','search'].includes(currentView))render()}},60000);
+function loadTasksServer(){return fetch('api/tasks',{headers:API_H,cache:'no-store'}).then(r=>r.ok?r.json():null).then(x=>{if(x&&Array.isArray(x.tasks)){TASKS=x.tasks;saveTasksLocal();if(['tasks','search'].includes(currentView))render()}}).catch(()=>{})}
+/* у загальному пошуку */
+function taskSearchSection(q){const a=taskFilter(canAllTasks()?TASKS:visibleTasks(),q);return {n:a.length,html:`<h3 class="res-h">Задачі менеджерів <span class="count-pill">${a.length}</span></h3>${a.length?`<div class="lead-wrap"><table class="lead-table"><thead><tr><th>ЄДРПОУ</th><th>Компанія</th><th>Область</th><th>ЛРП</th><th>Телефон</th><th>Завдання</th><th>Менеджер</th><th>Коли дзвонити</th><th>Статус часу</th></tr></thead><tbody>${a.slice(0,300).map(t=>{const s=tStat(tStatus(t));return `<tr class="click" data-task="${t.id}"><td>${hl(t.edrpou||'',q)}</td><td><b>${hl(t.company||'',q)}</b></td><td>${esc(t.region||'')}</td><td>${hl(t.lpr||'',q)}</td><td class="nowrap">${hl([t.phone,t.phones].filter(Boolean).join(', '),q)}</td><td>${hl(t.task||'',q)}</td><td>${esc(t.manager||'')}</td><td class="nowrap">${esc(t.callDate||'')}</td><td><span class="stage-pill" style="--sc:${s.color}">${esc(s.id)}</span></td></tr>`}).join('')}</tbody></table></div>`:'<p class="page-note">Нічого не знайдено.</p>'}`}}
 
 const visible=()=>requests.filter(r=>{const c=cl(r);return(!query||[c.client,r.edrpou,r.doc,c.manager,r.category,r.direction].join(' ').toLowerCase().includes(query))&&(!managerFilter||c.manager===managerFilter)&&(!categoryFilter||r.category===categoryFilter)});
 
-function setView(view){currentView=view;document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===view));const t={kanban:'Заявки',requests:'Додавання заявок',clients:'База клієнтів',directory:'Довідник',directions:'Списки для напрямків',leads:'Статистика лідогенераторів',leadsearch:'Пошук',search:'Пошук'};document.querySelector('#pageTitle').textContent=t[view]||'CRM';render()}
-function render(){const oldBoard=root.querySelector('.board');if(oldBoard)boardScroll=oldBoard.scrollLeft;const fn={kanban:renderKanban,requests:renderRequests,clients:renderClients,directory:renderDirectory,directions:renderDirections,leads:renderLeads,leadsearch:renderLeadSearch,search:renderSearch}[currentView]||renderKanban;fn();bind();bindLeadRows();bindSearchLinks()}
+function setView(view){currentView=view;document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===view));const t={kanban:'Заявки',requests:'Додавання заявок',clients:'База клієнтів',directory:'Довідник',directions:'Списки для напрямків',tasks:'Задачі менеджерів',leads:'Статистика лідогенераторів',leadsearch:'Пошук',search:'Пошук'};document.querySelector('#pageTitle').textContent=t[view]||'CRM';render()}
+const canDirections=()=>!me||isAdmin();
+function navRoles(){const b=document.querySelector('#nav [data-view="directions"]');if(b)b.hidden=!canDirections();if(currentView==='directions'&&!canDirections()){currentView='kanban';document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('active',x.dataset.view==='kanban'));document.querySelector('#pageTitle').textContent='Заявки'}}
+function render(){navRoles();const oldBoard=root.querySelector('.board');if(oldBoard)boardScroll=oldBoard.scrollLeft;const fn={kanban:renderKanban,requests:renderRequests,clients:renderClients,directory:renderDirectory,directions:renderDirections,tasks:renderTasks,leads:renderLeads,leadsearch:renderLeadSearch,search:renderSearch}[currentView]||renderKanban;fn();bind();bindLeadRows();bindSearchLinks()}
 function toolbar(active='kanban'){return `<div class="toolbar"><div class="view-tabs"><button class="${active==='kanban'?'active':''}" data-mode="kanban">КАНБАН</button><button class="${active==='list'?'active':''}" data-mode="list">СПИСОК</button></div><input id="pageSearch" placeholder="Пошук…" value="${esc(query)}"><select id="managerFilter">${opts(MANAGERS,managerFilter,'Усі менеджери')}</select><select id="categoryFilter">${opts(CATEGORIES,categoryFilter,'Усі категорії')}</select><div class="grow"></div><span class="counter">${visible().length} заявок</span></div>`}
 
 /* ---------- КАНБАН ---------- */
@@ -993,7 +1123,7 @@ async function boot(){let r=null;try{r=await fetch('api/me',{headers:API_H,cache
  const d=await r.json().catch(()=>({}));
  if(r.status===401){document.body.classList.add('locked');showAuth(d);return}
  if(!r.ok||!d.user){render();return}
- me=d.user;updateUserBlock();render();
+ me=d.user;updateUserBlock();render();loadTasksServer();
  fetch('api/leads',{headers:API_H,cache:'no-store'}).then(r=>r.ok?r.json():null).then(x=>{if(x&&Array.isArray(x.leads)){LEADS=x.leads;leadIdx=null;if(['leads','leadsearch','search'].includes(currentView))render()}}).catch(()=>{});
  const ok=await pullServer(true);if(ok){syncTimer=setInterval(()=>pullServer(),3000);addEventListener('focus',()=>pullServer());document.addEventListener('visibilitychange',()=>{if(!document.hidden)pullServer()})}}
 boot();
