@@ -453,6 +453,10 @@ body.locked .app,body.locked header,body.locked aside,body.locked main{visibilit
 .board-bar>div{position:absolute;top:2px;left:0;height:12px;border-radius:99px;background:#00953b;cursor:grab;transition:background .15s}
 .board-bar>div:hover,.board-bar.drag>div{background:#007a30}
 .board-bar.drag>div{cursor:grabbing}
+.hbar-box{position:relative}
+.hbar-box>.board-bar{position:sticky;bottom:10px;z-index:5;margin-top:8px}
+.lead-wrap,.table-wrap{max-height:none!important;scrollbar-width:none}
+.lead-wrap::-webkit-scrollbar,.table-wrap::-webkit-scrollbar{display:none}
 
 /* ---- Лідогенерація та єдиний пошук ---- */
 .nav-sub{padding:18px 12px 10px}
@@ -887,20 +891,23 @@ const visible=()=>requests.filter(r=>{const c=cl(r);return(!query||[c.client,r.e
 function setView(view){currentView=view;document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===view));const t={kanban:'Заявки',requests:'Додавання заявок',clients:'База клієнтів',directory:'Довідник',directions:'Списки для напрямків',tasks:'Задачі менеджерів',leads:'Статистика лідогенераторів',leadsearch:'Пошук',search:'Пошук'};document.querySelector('#pageTitle').textContent=t[view]||'CRM';render()}
 const canDirections=()=>!me||isAdmin();
 function navRoles(){const b=document.querySelector('#nav [data-view="directions"]');if(b)b.hidden=!canDirections();if(currentView==='directions'&&!canDirections()){currentView='kanban';document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('active',x.dataset.view==='kanban'));document.querySelector('#pageTitle').textContent='Заявки'}}
-function render(){navRoles();const oldBoard=root.querySelector('.board');if(oldBoard)boardScroll=oldBoard.scrollLeft;const fn={kanban:renderKanban,requests:renderRequests,clients:renderClients,directory:renderDirectory,directions:renderDirections,tasks:renderTasks,leads:renderLeads,leadsearch:renderLeadSearch,search:renderSearch}[currentView]||renderKanban;fn();bind();bindLeadRows();bindSearchLinks()}
+function render(){navRoles();const oldBoard=root.querySelector('.board');if(oldBoard)boardScroll=oldBoard.scrollLeft;const fn={kanban:renderKanban,requests:renderRequests,clients:renderClients,directory:renderDirectory,directions:renderDirections,tasks:renderTasks,leads:renderLeads,leadsearch:renderLeadSearch,search:renderSearch}[currentView]||renderKanban;fn();bind();bindLeadRows();bindSearchLinks();addBars()}
 function toolbar(active='kanban'){return `<div class="toolbar"><div class="view-tabs"><button class="${active==='kanban'?'active':''}" data-mode="kanban">КАНБАН</button><button class="${active==='list'?'active':''}" data-mode="list">СПИСОК</button></div><input id="pageSearch" placeholder="Пошук…" value="${esc(query)}"><select id="managerFilter">${opts(MANAGERS,managerFilter,'Усі менеджери')}</select><select id="categoryFilter">${opts(CATEGORIES,categoryFilter,'Усі категорії')}</select><div class="grow"></div><span class="counter">${visible().length} заявок</span></div>`}
 
 /* ---------- КАНБАН ---------- */
 function renderKanban(){if(kanbanMode==='list')return renderList();root.innerHTML=`<section class="page">${toolbar('kanban')}<div class="board">${STAGES.map(stageHtml).join('')}</div><div class="board-bar"><div></div></div></section>`;const b=root.querySelector('.board');if(b)b.scrollLeft=boardScroll;syncBoardBar()}
 /* смуга прокрутки канбану завжди внизу екрана, синхронна з дошкою */
-function syncBoardBar(){const b=root.querySelector('.board'),bar=root.querySelector('.board-bar');if(!b||!bar)return;const th=bar.firstElementChild;
+function syncBoardBar(){const b=root.querySelector('.board'),bar=root.querySelector('.board-bar');if(!b||!bar)return;attachBar(b,bar,()=>{boardScroll=b.scrollLeft})}
+/* зелена лінійка для гортання під кожною широкою таблицею */
+function addBars(){root.querySelectorAll('.lead-wrap,.table-wrap').forEach(w=>{if(w.parentElement.classList.contains('hbar-box'))return;const box=document.createElement('div');box.className='hbar-box';w.before(box);box.appendChild(w);const bar=document.createElement('div');bar.className='board-bar';bar.innerHTML='<div></div>';box.appendChild(bar);attachBar(w,bar)})}
+function attachBar(b,bar,onScroll){const th=bar.firstElementChild;
  const place=()=>{const max=b.scrollWidth-b.clientWidth;bar.style.display=max>2?'':'none';if(max<=2)return;const tw=bar.clientWidth,w=Math.max(60,tw*b.clientWidth/b.scrollWidth);th.style.width=w+'px';th.style.transform=`translateX(${(tw-w)*b.scrollLeft/max}px)`};
- b.onscroll=()=>{boardScroll=b.scrollLeft;place()};place();requestAnimationFrame(place);
+ b.onscroll=()=>{if(onScroll)onScroll();place()};place();requestAnimationFrame(place);
  const toScroll=x=>{const tw=bar.clientWidth,w=th.offsetWidth,max=b.scrollWidth-b.clientWidth;b.scrollLeft=Math.max(0,Math.min(1,x/(tw-w)))*max};
  th.onpointerdown=e=>{e.preventDefault();e.stopPropagation();th.setPointerCapture(e.pointerId);bar.classList.add('drag');const r=bar.getBoundingClientRect(),off=e.clientX-th.getBoundingClientRect().left;th.onpointermove=ev=>toScroll(ev.clientX-r.left-off);th.onpointerup=()=>{th.onpointermove=null;bar.classList.remove('drag')}};
  bar.onpointerdown=e=>{if(e.target!==bar)return;const r=bar.getBoundingClientRect();toScroll(e.clientX-r.left-th.offsetWidth/2)};
  bar.onwheel=e=>{e.preventDefault();b.scrollLeft+=e.deltaY+e.deltaX};
- if(!syncBoardBar.r){syncBoardBar.r=1;addEventListener('resize',()=>{if(root.querySelector('.board'))syncBoardBar()})}}
+ if(!attachBar.r){attachBar.r=1;addEventListener('resize',()=>{if(root.querySelector('.board'))syncBoardBar();addBars()})}}
 function stageHtml(s){const rows=visible().filter(r=>r.stage===s.id);return `<div class="stage" data-stage="${esc(s.id)}" style="--sc:${s.color};--sf:${s.fg}"><div class="stage-head"><i style="background:${s.color}"></i><h3>${esc(s.title)}</h3><span>${rows.length}</span><small>${rows.length} шт.</small></div>${rows.map(cardHtml).join('')}</div>`}
 function cardHtml(r){const c=cl(r),f=formed(r);return `<article class="card${r.priority==='high'?' high':''}${f.ok?'':' warn'}" draggable="${locked(r)?'false':'true'}" data-id="${r.id}" data-open="${r.id}" style="--cc:${catColor(r.category)}"><div class="card-top"><span class="category" style="--c:${catColor(r.category)}">${esc(r.category)}</span><button class="dots">•••</button></div><h4>${esc(c.client)}</h4>${r.doc?`<div class="doc">${esc(r.doc)}</div>`:''}${locked(r)?`<div class="card-lock">Очікує № документу (ФР) від бухгалтера</div>`:''}<div class="direction">${esc(r.direction)} · ${esc(r.brand)}</div>${f.ok?'':`<div class="card-hint">${esc(f.text.split('\n')[0])}</div>`}<div class="card-info"><div><b>${fmt(r.amount,r.currency)}</b><small>${esc(c.manager)}</small></div><span class="avatar" style="--av:${mgrColor(c.manager)}">${initials(c.manager)}</span></div></article>`}
 
