@@ -455,7 +455,7 @@ body.locked .app,body.locked header,body.locked aside,body.locked main{visibilit
 .board-bar.drag>div{cursor:grabbing}
 .hbar-box{position:relative}
 .hbar-box>.board-bar{position:sticky;bottom:10px;z-index:5;margin-top:8px}
-.hbar-box.table-hbar>.board-bar{top:calc(100vh - 28px);bottom:auto;margin:0 8px -16px;z-index:25}
+.hbar-box.table-hbar>.board-bar{position:fixed;top:auto;bottom:10px;margin:0;z-index:100}
 .lead-wrap,.table-wrap{max-height:none!important;scrollbar-width:none}
 .lead-wrap::-webkit-scrollbar,.table-wrap::-webkit-scrollbar{display:none}
 
@@ -914,14 +914,15 @@ function renderKanban(){if(kanbanMode==='list')return renderList();root.innerHTM
 function syncBoardBar(){const b=root.querySelector('.board'),bar=root.querySelector('.board-bar');if(!b||!bar)return;attachBar(b,bar,()=>{boardScroll=b.scrollLeft})}
 /* зелена лінійка для гортання під кожною широкою таблицею */
 function addBars(){root.querySelectorAll('.lead-wrap,.table-wrap').forEach(w=>{if(w.parentElement.classList.contains('hbar-box'))return;const table=w.classList.contains('table-wrap'),box=document.createElement('div');box.className='hbar-box'+(table?' table-hbar':'');w.before(box);box.appendChild(w);const bar=document.createElement('div');bar.className='board-bar';bar.innerHTML='<div></div>';table?box.insertBefore(bar,w):box.appendChild(bar);attachBar(w,bar)})}
-function attachBar(b,bar,onScroll){const th=bar.firstElementChild;
- const place=()=>{const max=b.scrollWidth-b.clientWidth;bar.style.display=max>2?'':'none';if(max<=2)return;const tw=bar.clientWidth,w=Math.max(60,tw*b.clientWidth/b.scrollWidth);th.style.width=w+'px';th.style.transform=`translateX(${(tw-w)*b.scrollLeft/max}px)`};
+function attachBar(b,bar,onScroll){const th=bar.firstElementChild,fixed=bar.parentElement?.classList.contains('table-hbar');
+ const place=()=>{if(fixed){const r=b.getBoundingClientRect(),gap=8,left=Math.max(gap,r.left+gap),right=Math.min(innerWidth-gap,r.right-gap);bar.style.left=left+'px';bar.style.width=Math.max(0,right-left)+'px'}const max=b.scrollWidth-b.clientWidth;bar.style.display=max>2?'':'none';if(max<=2)return;const tw=bar.clientWidth,w=Math.max(60,tw*b.clientWidth/b.scrollWidth);th.style.width=w+'px';th.style.transform=`translateX(${(tw-w)*b.scrollLeft/max}px)`};
+ bar._place=place;
  b.onscroll=()=>{if(onScroll)onScroll();place()};place();requestAnimationFrame(place);
  const toScroll=x=>{const tw=bar.clientWidth,w=th.offsetWidth,max=b.scrollWidth-b.clientWidth;b.scrollLeft=Math.max(0,Math.min(1,x/(tw-w)))*max};
  th.onpointerdown=e=>{e.preventDefault();e.stopPropagation();th.setPointerCapture(e.pointerId);bar.classList.add('drag');const r=bar.getBoundingClientRect(),off=e.clientX-th.getBoundingClientRect().left;th.onpointermove=ev=>toScroll(ev.clientX-r.left-off);th.onpointerup=()=>{th.onpointermove=null;bar.classList.remove('drag')}};
  bar.onpointerdown=e=>{if(e.target!==bar)return;const r=bar.getBoundingClientRect();toScroll(e.clientX-r.left-th.offsetWidth/2)};
  bar.onwheel=e=>{e.preventDefault();b.scrollLeft+=e.deltaY+e.deltaX};
- if(!attachBar.r){attachBar.r=1;addEventListener('resize',()=>{if(root.querySelector('.board'))syncBoardBar();addBars()})}}
+ if(!attachBar.r){attachBar.r=1;addEventListener('resize',()=>{if(root.querySelector('.board'))syncBoardBar();addBars();root.querySelectorAll('.board-bar').forEach(x=>x._place?.())})}}
 function stageHtml(s){const rows=visible().filter(r=>r.stage===s.id);return `<div class="stage" data-stage="${esc(s.id)}" style="--sc:${s.color};--sf:${s.fg}"><div class="stage-head"><i style="background:${s.color}"></i><h3>${esc(s.title)}</h3><span>${rows.length}</span><small>${rows.length} шт.</small></div>${rows.map(cardHtml).join('')}</div>`}
 function cardHtml(r){const c=cl(r),f=formed(r);return `<article class="card${r.priority==='high'?' high':''}${f.ok?'':' warn'}" draggable="${locked(r)?'false':'true'}" data-id="${r.id}" data-open="${r.id}" style="--cc:${catColor(r.category)}"><div class="card-top"><span class="category" style="--c:${catColor(r.category)}">${esc(r.category)}</span><button class="dots">•••</button></div><h4>${esc(c.client)}</h4>${r.doc?`<div class="doc">${esc(r.doc)}</div>`:''}${locked(r)?`<div class="card-lock">Очікує № документу (ФР) від бухгалтера</div>`:''}<div class="direction">${esc(r.direction)} · ${esc(r.brand)}</div>${f.ok?'':`<div class="card-hint">${esc(f.text.split('\n')[0])}</div>`}<div class="card-info"><div><b>${fmt(r.amount,r.currency)}</b><small>${esc(c.manager)}</small></div><span class="avatar" style="--av:${mgrColor(c.manager)}">${initials(c.manager)}</span></div></article>`}
 
