@@ -455,8 +455,13 @@ body.locked .app,body.locked header,body.locked aside,body.locked main{visibilit
 .board-bar.drag>div{cursor:grabbing}
 .hbar-box{position:relative}
 .hbar-box>.board-bar{position:sticky;bottom:10px;z-index:5;margin-top:8px}
-.lead-wrap,.table-wrap{max-height:none!important;scrollbar-width:none}
-.lead-wrap::-webkit-scrollbar,.table-wrap::-webkit-scrollbar{display:none}
+.lead-wrap{max-height:none!important;scrollbar-width:none}
+.lead-wrap::-webkit-scrollbar{display:none}
+.table-wrap{max-height:calc(100vh - 410px)!important;overflow:auto;scrollbar-width:auto;scrollbar-color:#00953b #dcebe1}
+.table-wrap::-webkit-scrollbar{display:block;width:14px;height:16px}
+.table-wrap::-webkit-scrollbar-track{background:#dcebe1;border-radius:99px}
+.table-wrap::-webkit-scrollbar-thumb{background:#00953b;border:3px solid #dcebe1;border-radius:99px}
+.table-wrap::-webkit-scrollbar-thumb:hover{background:#007a30}
 
 /* ---- Лідогенерація та єдиний пошук ---- */
 .nav-sub{padding:18px 12px 10px}
@@ -898,8 +903,8 @@ function toolbar(active='kanban'){return `<div class="toolbar"><div class="view-
 function renderKanban(){if(kanbanMode==='list')return renderList();root.innerHTML=`<section class="page">${toolbar('kanban')}<div class="board">${STAGES.map(stageHtml).join('')}</div><div class="board-bar"><div></div></div></section>`;const b=root.querySelector('.board');if(b)b.scrollLeft=boardScroll;syncBoardBar()}
 /* смуга прокрутки канбану завжди внизу екрана, синхронна з дошкою */
 function syncBoardBar(){const b=root.querySelector('.board'),bar=root.querySelector('.board-bar');if(!b||!bar)return;attachBar(b,bar,()=>{boardScroll=b.scrollLeft})}
-/* зелена лінійка для гортання під кожною широкою таблицею */
-function addBars(){root.querySelectorAll('.lead-wrap,.table-wrap').forEach(w=>{if(w.parentElement.classList.contains('hbar-box'))return;const box=document.createElement('div');box.className='hbar-box';w.before(box);box.appendChild(w);const bar=document.createElement('div');bar.className='board-bar';bar.innerHTML='<div></div>';box.appendChild(bar);attachBar(w,bar)})}
+/* зелена лінійка для гортання під таблицями лідогенерації; основні таблиці мають постійну нативну смугу */
+function addBars(){root.querySelectorAll('.lead-wrap').forEach(w=>{if(w.parentElement.classList.contains('hbar-box'))return;const box=document.createElement('div');box.className='hbar-box';w.before(box);box.appendChild(w);const bar=document.createElement('div');bar.className='board-bar';bar.innerHTML='<div></div>';box.appendChild(bar);attachBar(w,bar)})}
 function attachBar(b,bar,onScroll){const th=bar.firstElementChild;
  const place=()=>{const max=b.scrollWidth-b.clientWidth;bar.style.display=max>2?'':'none';if(max<=2)return;const tw=bar.clientWidth,w=Math.max(60,tw*b.clientWidth/b.scrollWidth);th.style.width=w+'px';th.style.transform=`translateX(${(tw-w)*b.scrollLeft/max}px)`};
  b.onscroll=()=>{if(onScroll)onScroll();place()};place();requestAnimationFrame(place);
