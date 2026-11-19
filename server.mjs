@@ -470,7 +470,7 @@ function chatAct(id, b, who) {
   CHQ.put.run(id, JSON.stringify(c), now()); return { chat: c };
 }
 async function chatRoutes(req, res, p, url, me) {
-  if (p === '/api/chat/all' && req.method === 'GET') { const out = {}; for (const r of CHQ.all.all()) out[r.req_id] = JSON.parse(r.data); return send(res, 200, { chats: out }); }
+  if (p === '/api/chat/all' && req.method === 'GET') { const out = {}; for (const r of CHQ.all.all()) { const c = JSON.parse(r.data); if ((c.members || []).includes(me.name)) out[r.req_id] = c; } return send(res, 200, { chats: out }); }
   if (p === '/api/chat') {
     if (req.method === 'GET') { const id = Number(url.searchParams.get('req')); if (!Number.isInteger(id)) return send(res, 400, { error: 'req' }); return send(res, 200, { chat: chatOf(id) }); }
     if (req.method === 'POST') { const b = await readJson(req); const id = Number(b.req); if (!Number.isInteger(id) || !db.prepare('SELECT 1 FROM requests WHERE id = ?').get(id)) return send(res, 404, { error: 'Немає такої заявки' });
