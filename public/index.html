@@ -149,7 +149,7 @@ tr:hover td{background:#f2faf5}
 .form-title{min-height:62px;border-bottom:1px solid var(--line);padding:0 20px;display:flex;align-items:center;background:linear-gradient(90deg,var(--g-50),#fff)}
 .form-title h2{font:700 19px/1 var(--hd);margin:0;color:var(--g-800)}
 .form-grid{padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:14px 16px}
-.form-grid label{font:600 12.5px/1.2 var(--hd);letter-spacing:.03em;color:#4d4d4d}
+.form-grid label{font:700 12.5px/1.2 var(--hd);letter-spacing:.03em;color:var(--g);text-shadow:0 0 10px rgba(0,149,59,.16)}
 .form-grid label.wide{grid-column:1/-1}
 .form-grid input,.form-grid select,.form-grid textarea{display:block;width:100%;margin-top:6px;border:1px solid var(--line-2);border-radius:9px;padding:11px 12px;font:400 14.5px/1.3 var(--bd);color:var(--ink);background:#ffffff;outline:0;transition:border-color .15s,box-shadow .15s,background .15s}
 .form-grid input:focus,.form-grid select:focus,.form-grid textarea:focus{border-color:var(--g);box-shadow:0 0 0 3px var(--g-50);background:#fff}
@@ -305,7 +305,7 @@ td.dirs b{color:#00953b}
 /* ---------- Обов'язкові поля та блокування етапу без № ФР ---------- */
 .form-grid label .star{color:#f32735;margin-left:3px;font-weight:700}
 .form-grid label:not(.req) .star{display:none}
-.form-grid label.missing{color:#f32735}
+.form-grid label.missing{color:var(--g)}
 .form-grid label.missing input,.form-grid label.missing select,.form-grid label.missing textarea{border-color:#f32735;background:color-mix(in srgb,#f32735 4%,#fff)}
 .form-grid label.missing input:focus,.form-grid label.missing select:focus,.form-grid label.missing textarea:focus{box-shadow:0 0 0 3px color-mix(in srgb,#f32735 15%,#fff)}
 .form-grid select:disabled{background:#f2f2f2;color:#808080;cursor:not-allowed}
