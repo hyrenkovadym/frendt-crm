@@ -18,6 +18,14 @@ services:
         value: VolodymyrHirenko
       - key: CRM_PASSWORD
         sync: false
+      # Ringostat: дзвінки й записи в картці клієнта («Інтеграції» → «Ringostat API» у кабінеті Ringostat)
+      - key: RINGOSTAT_AUTH_KEY
+        sync: false
+      - key: RINGOSTAT_PROJECT_ID
+        sync: false
+      # будь-який довгий секрет; адреса вебхука: https://<сайт>/api/ringostat/hook?token=<цей секрет>
+      - key: RINGOSTAT_WEBHOOK_TOKEN
+        sync: false
     # Keep the SQLite database and daily backups across deploys.
     disk:
       name: frendt-crm-data

@@ -105,6 +105,8 @@ const taskRows = (rows) => rows.map(row => ({ id: row.id, ...JSON.parse(row.data
 const SEED_FILE = join(here, 'seed.json');
 (function seedOnce() {
   if (db.prepare(`SELECT v FROM meta WHERE k='sheet_seed_v1'`).get()) return;
+  // база вже з даними — НІКОЛИ не стираємо й не перезаливаємо (навіть якщо позначка загубилась)
+  { const c0 = q.count.get(); if (c0.r || c0.c) { db.prepare(`INSERT OR REPLACE INTO meta (k, v) VALUES ('sheet_seed_v1', ?)`).run(now()); return; } }
   const seed = typeof EMBEDDED_SEED === 'object' ? EMBEDDED_SEED : (existsSync(SEED_FILE) ? JSON.parse(readFileSync(SEED_FILE, 'utf8')) : null);
   if (!seed) return;
   tx(() => {
@@ -278,6 +280,205 @@ function trustedBrowserRequest(req) {
   try { return new URL(origin).host === req.headers.host; } catch { return false; }
 }
 
+// ---------- Ringostat: дзвінки, записи, коментарі в картці клієнта ----------
+// RINGOSTAT_AUTH_KEY, RINGOSTAT_PROJECT_ID — з кабінету Ringostat («Інтеграції» → «Ringostat API»).
+// Без ключа CRM працює як раніше, просто дзвінків немає.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS calls (id TEXT PRIMARY KEY, at TEXT NOT NULL, dir TEXT, caller TEXT, dst TEXT, pkey TEXT, employee TEXT,
+    disposition TEXT, billsec INTEGER NOT NULL DEFAULT 0, recording TEXT, missed INTEGER NOT NULL DEFAULT 0, handled INTEGER NOT NULL DEFAULT 0, raw TEXT);
+  CREATE INDEX IF NOT EXISTS calls_pkey ON calls(pkey);
+  CREATE INDEX IF NOT EXISTS calls_at ON calls(at);
+  CREATE TABLE IF NOT EXISTS notes (id INTEGER PRIMARY KEY AUTOINCREMENT, edrpou TEXT, call_id TEXT, author TEXT, text TEXT, rating INTEGER, at TEXT NOT NULL);
+  CREATE INDEX IF NOT EXISTS notes_edrpou ON notes(edrpou);
+`);
+const RS_KEY = String(process.env.RINGOSTAT_AUTH_KEY || '').trim();
+const RS_PROJECT = String(process.env.RINGOSTAT_PROJECT_ID || '').trim();
+const metaGet = (k) => db.prepare('SELECT v FROM meta WHERE k = ?').get(k)?.v ?? null;
+const metaSet = (k, v) => db.prepare('INSERT OR REPLACE INTO meta (k, v) VALUES (?, ?)').run(k, String(v));
+const RS_TOKEN = String(process.env.RINGOSTAT_WEBHOOK_TOKEN || '').trim() || metaGet('rs_token') || (() => { const t = randomBytes(18).toString('base64url'); metaSet('rs_token', t); return t; })();
+const pkey = (v) => { const d = String(v ?? '').replace(/\D/g, ''); return d.length >= 9 ? d.slice(-9) : ''; };
+const phoneKeys = (...vals) => [...new Set(vals.flatMap(v => String(v ?? '').split(/[,;\n/]+/)).map(pkey).filter(Boolean))];
+const KYIV = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Kyiv', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' });
+const kyiv = (d) => KYIV.format(d).replace('T', ' ');
+const pick = (o, names) => { for (const n of names) { const v = o?.[n]; if (v !== undefined && v !== null && String(v).trim() !== '') return String(v).trim(); } return ''; };
+function normCall(o) {
+  const at = pick(o, ['calldate', 'call_date', 'date', 'start_time', 'datetime', 'time']).replace('T', ' ').slice(0, 19);
+  const type = pick(o, ['call_type', 'type', 'direction']).toLowerCase();
+  const caller = pick(o, ['caller', 'src', 'from', 'caller_number', 'number_from', 'callerid']);
+  const dst = pick(o, ['dst', 'destination', 'to', 'called', 'number_to', 'dst_number', 'callee']);
+  const dir = /out|callback/.test(type) ? 'out' : 'in';
+  const disposition = pick(o, ['disposition', 'status', 'call_status']).toUpperCase();
+  const billsec = Number.parseInt(pick(o, ['billsec', 'talk_time', 'bill_sec', 'duration_talk']) || '0', 10) || 0;
+  const answered = billsec > 0 || /^ANSWER/.test(disposition);
+  // один і той самий дзвінок з вебхука і з журналу має збігтися — ключ з часу і номерів
+  const id = `${at}|${caller.replace(/\D/g, '').slice(-9)}|${dst.replace(/\D/g, '').slice(-9)}`;
+  if (!at) return null;
+  return { id, at, dir, caller, dst, pkey: pkey(dir === 'out' ? dst : caller), employee: crmName(pick(o, ['employee_fio', 'employee', 'employee_name', 'manager', 'operator'])),
+    disposition, billsec, recording: pick(o, ['recording', 'recording_url', 'record', 'record_url', 'recording_wav']), missed: dir === 'in' && !answered ? 1 : 0 };
+}
+const CQ = {
+  up: db.prepare(`INSERT INTO calls (id, at, dir, caller, dst, pkey, employee, disposition, billsec, recording, missed, raw) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+    ON CONFLICT(id) DO UPDATE SET at=excluded.at, dir=excluded.dir, caller=excluded.caller, dst=excluded.dst, pkey=excluded.pkey,
+    employee=COALESCE(NULLIF(excluded.employee,''), calls.employee), disposition=excluded.disposition, billsec=excluded.billsec,
+    recording=COALESCE(NULLIF(excluded.recording,''), calls.recording), missed=excluded.missed, raw=excluded.raw`),
+  get: db.prepare('SELECT * FROM calls WHERE id = ?'),
+  done: db.prepare('UPDATE calls SET handled = 1 WHERE id = ?'),
+  count: db.prepare('SELECT COUNT(*) AS n, MAX(at) AS last FROM calls'),
+  taskByEdrpou: db.prepare(`SELECT id, manager, data FROM tasks WHERE json_extract(data, '$.edrpou') = ? ORDER BY id LIMIT 1`),
+  allTasks: db.prepare('SELECT id, manager, data FROM tasks'),
+  allClients: db.prepare('SELECT edrpou, data FROM clients'),
+  notes: db.prepare('SELECT id, edrpou, call_id, author, text, rating, at FROM notes WHERE edrpou = ? ORDER BY at DESC'),
+  addNote: db.prepare('INSERT INTO notes (edrpou, call_id, author, text, rating, at) VALUES (?,?,?,?,?,?)'),
+};
+function clientByKey() { const m = new Map(); for (const r of CQ.allClients.all()) { const c = JSON.parse(r.data); for (const k of phoneKeys(c.phone1, c.phone2)) if (!m.has(k)) m.set(k, c); } return m; }
+const uaDay = (d) => { const s = kyiv(d); return `${s.slice(8, 10)}.${s.slice(5, 7)}.${s.slice(0, 4)}`; };
+// Пропущений вхідний (лише свіжий, не з історії) → задача «передзвонити» в «Задачах менеджерів»
+function handleMissed(c, cMap) {
+  if (!c.missed || c.handled) return;
+  if (Date.now() - Date.parse(c.at.replace(' ', 'T') + '+02:00') > 3 * 864e5) { CQ.done.run(c.id); return; }
+  const when = `${c.at.slice(8, 10)}.${c.at.slice(5, 7)} ${c.at.slice(11, 16)}`; const line = `Пропущений дзвінок ${when} з ${c.caller}`;
+  const client = cMap.get(c.pkey); let row = client?.edrpou ? CQ.taskByEdrpou.get(String(client.edrpou)) : null;
+  if (!row && c.pkey) row = CQ.allTasks.all().find(t => { const x = JSON.parse(t.data); return phoneKeys(x.phone, x.phones).includes(c.pkey); }) || null;
+  tx(() => {
+    if (row) {
+      const t = JSON.parse(row.data); t.callDate = uaDay(new Date()); t.c1 = t.c1 ? `${line}\n${t.c1}` : line;
+      taskQ.put.run(row.id, t.manager || '', JSON.stringify(t), now());
+    } else {
+      const t = client ? { edrpou: String(client.edrpou || ''), company: client.client || '', region: client.region || '', district: client.district || '', lpr: client.contact || '',
+        phone: client.phone1 || c.caller, manager: client.manager || c.employee || '', task: 'Передзвонити — пропущений дзвінок', c1: line, callDate: uaDay(new Date()) }
+        : { phone: c.caller, manager: c.employee || '', task: 'Новий номер — пропущений дзвінок', c1: line, callDate: uaDay(new Date()) };
+      for (const k of Object.keys(t)) if (!t[k]) delete t[k];
+      taskQ.put.run(taskQ.max.get().m + 1, t.manager || '', JSON.stringify(t), now());
+    }
+    CQ.done.run(c.id);
+  });
+}
+function storeCalls(list) {
+  let n = 0; const cMap = clientByKey(); const fresh = [];
+  for (const raw of list) { const c = normCall(raw); if (!c) continue; CQ.up.run(c.id, c.at, c.dir, c.caller, c.dst, c.pkey, c.employee, c.disposition, c.billsec, c.recording, c.missed, JSON.stringify(raw).slice(0, 4000)); n++; fresh.push(c.id); }
+  for (const id of fresh) { const c = CQ.get.get(id); if (c) try { handleMissed(c, cMap); } catch (e) { console.error('Ringostat задача:', e.message); } }
+  return n;
+}
+const RS_FIELDS = 'calldate,caller,dst,disposition,billsec,call_type,employee_fio,recording';
+async function rsList(from, to) {
+  const headers = { 'Auth-key': RS_KEY, 'Content-Type': 'application/json' }; if (RS_PROJECT) headers['x-project-id'] = RS_PROJECT;
+  for (const fields of [`uniqueid,${RS_FIELDS}`, RS_FIELDS]) {
+    const u = new URL(process.env.RINGOSTAT_API_URL || 'https://api.ringostat.net/calls/list'); u.search = new URLSearchParams({ export_type: 'json', from, to, fields }).toString();
+    const r = await fetch(u, { headers, signal: AbortSignal.timeout(60000) });
+    const text = await r.text(); if (!r.ok) { if (fields.startsWith('uniqueid')) continue; throw new Error(`Ringostat ${r.status}: ${text.slice(0, 200)}`); }
+    const j = JSON.parse(text || '[]'); return Array.isArray(j) ? j : (j.data || j.calls || j.items || []);
+  }
+  return [];
+}
+let rsBusy = false;
+async function rsPoll() {
+  if (!RS_KEY || rsBusy) return; rsBusy = true;
+  try {
+    const last = metaGet('rs_last'); const started = new Date();
+    const from = kyiv(new Date((last ? Date.parse(last) : Date.now() - 864e5) - 2 * 3600e3));
+    const n = storeCalls(await rsList(from, kyiv(started)));
+    metaSet('rs_last', started.toISOString()); metaSet('rs_err', ''); if (n) console.log('Ringostat: оновлено дзвінків', n);
+  } catch (e) { metaSet('rs_err', `${new Date().toISOString()} ${e.message}`); console.error('Ringostat:', e.message); } finally { rsBusy = false; }
+}
+// Історія за рік — один раз, тижнями, у фоні (задачі з неї не створюються)
+async function rsBackfill() {
+  if (!RS_KEY) return; const end = Date.now() - 365 * 864e5;
+  let cursor = Date.parse(metaGet('rs_back') || new Date().toISOString());
+  while (cursor > end) {
+    const from = Math.max(end, cursor - 7 * 864e5);
+    try { storeCalls(await rsList(kyiv(new Date(from)), kyiv(new Date(cursor)))); cursor = from; metaSet('rs_back', new Date(cursor).toISOString()); }
+    catch (e) { metaSet('rs_err', `${new Date().toISOString()} історія: ${e.message}`); await new Promise(r => setTimeout(r, 5 * 60e3)); }
+    await new Promise(r => setTimeout(r, 15e3));
+  }
+}
+if (RS_KEY) { setTimeout(rsPoll, 10e3); setInterval(rsPoll, 10 * 60e3); setTimeout(rsBackfill, 60e3); }
+// Хто що чує: адміністратор — усе; менеджер — свої дзвінки і пропущені своїх клієнтів
+// У Ringostat ім'я буває «Прізвище Ім'я», у CRM — «Ім'я Прізвище»: порівнюємо без урахування порядку слів
+const nameKey = (n) => String(n || '').toLowerCase().replace(/['’`ʼ]/g, '').split(/\s+/).filter(Boolean).sort().join(' ');
+const crmName = (n) => { if (!n) return ''; const k = nameKey(n); const u = db.prepare('SELECT name FROM users').all().find(x => nameKey(x.name) === k); return u ? u.name : n; };
+function canHear(me, admin, c, cMap) { if (admin) return true; if (c.employee) return nameKey(c.employee) === nameKey(me.name); return nameKey(cMap.get(c.pkey)?.manager) === nameKey(me.name); }
+const callOut = (c, cMap) => ({ id: c.id, at: c.at, dir: c.dir, number: c.dir === 'out' ? c.dst : c.caller, line: c.dir === 'out' ? c.caller : c.dst, employee: c.employee || '',
+  disposition: c.disposition || '', billsec: c.billsec || 0, missed: !!c.missed, rec: !!c.recording, client: cMap.get(c.pkey)?.edrpou || '' });
+async function readBody(req) { let raw = ''; for await (const ch of req) { raw += ch; if (raw.length > 1e6) throw new Error('too large'); }
+  const t = String(req.headers['content-type'] || ''); if (t.includes('json')) return JSON.parse(raw || '{}'); return Object.fromEntries(new URLSearchParams(raw)); }
+async function ringostatRoutes(req, res, p, url, me, admin) {
+  if (p === '/api/ringostat/status' && req.method === 'GET') {
+    if (!admin) return send(res, 403, { error: 'Лише для адміністратора' }); const s = CQ.count.get();
+    return send(res, 200, { configured: !!RS_KEY, calls: s.n, lastCall: s.last, lastSync: metaGet('rs_last'), history: metaGet('rs_back'), error: metaGet('rs_err') || '', hook: `/api/ringostat/hook?token=${RS_TOKEN}` });
+  }
+  if (p === '/api/calls' && req.method === 'GET') {
+    const cMap = clientByKey(); const code = String(url.searchParams.get('edrpou') || '').trim(); const keys = new Set(phoneKeys(url.searchParams.get('phones')));
+    if (code) { for (const r of CQ.allClients.all()) { if (String(r.edrpou).trim() !== code) continue; const c = JSON.parse(r.data); phoneKeys(c.phone1, c.phone2).forEach(k => keys.add(k)); }
+      for (const t of CQ.allTasks.all()) { const x = JSON.parse(t.data); if (String(x.edrpou || '').trim() === code) phoneKeys(x.phone, x.phones).forEach(k => keys.add(k)); } }
+    if (!keys.size) return send(res, 200, { calls: [], configured: !!RS_KEY });
+    const ks = [...keys].slice(0, 40); const rows = db.prepare(`SELECT * FROM calls WHERE pkey IN (${ks.map(() => '?').join(',')}) ORDER BY at DESC LIMIT 1000`).all(...ks);
+    return send(res, 200, { calls: rows.filter(c => canHear(me, admin, c, cMap)).map(c => callOut(c, cMap)), configured: !!RS_KEY });
+  }
+  const m = /^\/api\/calls\/([^/]+)\/audio$/.exec(p);
+  if (m && req.method === 'GET') {
+    const c = CQ.get.get(decodeURIComponent(m[1])); if (!c || !c.recording) return send(res, 404, { error: 'Запису немає' });
+    if (!canHear(me, admin, c, clientByKey())) return send(res, 403, { error: 'Це дзвінок іншого менеджера' });
+    const up = await fetch(c.recording, { headers: req.headers.range ? { Range: req.headers.range } : {}, redirect: 'follow', signal: AbortSignal.timeout(120000) });
+    if (!up.ok && up.status !== 206) return send(res, 502, { error: 'Ringostat не віддав запис (посилання зберігаються близько року)' });
+    const h = { 'Content-Type': up.headers.get('content-type') || 'audio/mpeg', 'Cache-Control': 'private, max-age=3600', 'Accept-Ranges': 'bytes', 'X-Content-Type-Options': 'nosniff' };
+    for (const k of ['content-length', 'content-range']) { const v = up.headers.get(k); if (v) h[k] = v; }
+    if (url.searchParams.get('download')) h['Content-Disposition'] = `attachment; filename="call-${c.at.slice(0, 10)}.mp3"`;
+    res.writeHead(up.status, h); for await (const chunk of up.body) res.write(chunk); return res.end();
+  }
+  if (p === '/api/notes') {
+    if (req.method === 'GET') { const code = String(url.searchParams.get('edrpou') || '').trim(); return send(res, 200, { notes: code ? CQ.notes.all(code) : [] }); }
+    if (req.method === 'POST') { const b = await readJson(req); const code = String(b.edrpou || '').trim(); const text = String(b.text || '').trim().slice(0, 4000);
+      const rating = Number.isInteger(b.rating) && b.rating >= 1 && b.rating <= 5 ? b.rating : null;
+      if (!code || (!text && !rating)) return send(res, 400, { error: 'Порожній коментар' });
+      CQ.addNote.run(code, String(b.call_id || '').slice(0, 200) || null, me.name, text, rating, now()); return send(res, 200, { notes: CQ.notes.all(code) }); }
+  }
+  return null;
+}
+
+// ---------- Обговорення заявок (чат біля кожної заявки) ----------
+db.exec(`CREATE TABLE IF NOT EXISTS chats (req_id INTEGER PRIMARY KEY, data TEXT NOT NULL, updated_at TEXT NOT NULL)`);
+const CHQ = {
+  get: db.prepare('SELECT data FROM chats WHERE req_id = ?'),
+  put: db.prepare('INSERT OR REPLACE INTO chats (req_id, data, updated_at) VALUES (?, ?, ?)'),
+  all: db.prepare('SELECT req_id, data FROM chats'),
+};
+const chId = () => Date.now().toString(36) + randomBytes(3).toString('hex');
+const clip = (v, n) => String(v ?? '').slice(0, n);
+function chatOf(id) {
+  const row = CHQ.get.get(id); if (row) return JSON.parse(row.data);
+  const r = db.prepare('SELECT data FROM requests WHERE id = ?').get(id); const req = r ? JSON.parse(r.data) : null;
+  let mgr = req?.manager || ''; if (!mgr && req?.edrpou) { const cr = db.prepare('SELECT data FROM clients WHERE edrpou = ?').get(String(req.edrpou).trim()); if (cr) mgr = JSON.parse(cr.data).manager || ''; } return { members: mgr ? [mgr] : [], msgs: [], read: {}, pinned: null };
+}
+function chatAct(id, b, who) {
+  const c = chatOf(id); const t = Date.now(); c.read = c.read || {}; c.members = c.members || []; c.msgs = c.msgs || [];
+  const sys = (text) => c.msgs.push({ id: chId(), t, sys: text });
+  if (b.type === 'msg') {
+    const text = clip(b.text, 4000).trim(); const files = (Array.isArray(b.files) ? b.files : []).slice(0, 10).map(f => clip(f, 200));
+    if (!text && !files.length) return { error: 'Порожнє повідомлення' };
+    if (!c.members.includes(who)) c.members.push(who);
+    c.msgs.push({ id: chId(), t, who, text, files, reply: b.reply ? clip(b.reply, 40) : null });
+    for (const n of (Array.isArray(b.mentions) ? b.mentions : []).slice(0, 10).map(x => clip(x, 80))) if (n && text.includes('@' + n) && !c.members.includes(n)) { c.members.push(n); sys(`${n} доданий(а) до обговорення через згадку`); }
+    c.read[who] = t;
+  } else if (b.type === 'join') { if (!c.members.includes(who)) { c.members.push(who); sys(`${who} приєднався(лась) до обговорення`); } }
+  else if (b.type === 'add') { const n = clip(b.name, 80).trim(); if (n && !c.members.includes(n)) { c.members.push(n); sys(`${who} додав(ла) ${n}`); } }
+  else if (b.type === 'remove') { const n = clip(b.name, 80); if (c.members.includes(n)) { c.members = c.members.filter(x => x !== n); sys(`${who} прибрав(ла) ${n}`); } }
+  else if (b.type === 'react') { const m = c.msgs.find(x => x.id === b.msg); const e = clip(b.emoji, 8); if (m && e) { m.reacts = m.reacts || {}; const a = m.reacts[e] = m.reacts[e] || []; const i = a.indexOf(who); i >= 0 ? a.splice(i, 1) : a.push(who); } }
+  else if (b.type === 'pin') { const was = c.pinned === b.msg; if (was || c.msgs.some(x => x.id === b.msg)) { c.pinned = was ? null : clip(b.msg, 40); sys(`${who} ${was ? 'відкріпив(ла)' : 'закріпив(ла)'} повідомлення`); } }
+  else if (b.type === 'read') c.read[who] = t;
+  else return { error: 'Невідома дія' };
+  if (c.msgs.length > 3000) c.msgs = c.msgs.slice(-3000);
+  CHQ.put.run(id, JSON.stringify(c), now()); return { chat: c };
+}
+async function chatRoutes(req, res, p, url, me) {
+  if (p === '/api/chat/all' && req.method === 'GET') { const out = {}; for (const r of CHQ.all.all()) out[r.req_id] = JSON.parse(r.data); return send(res, 200, { chats: out }); }
+  if (p === '/api/chat') {
+    if (req.method === 'GET') { const id = Number(url.searchParams.get('req')); if (!Number.isInteger(id)) return send(res, 400, { error: 'req' }); return send(res, 200, { chat: chatOf(id) }); }
+    if (req.method === 'POST') { const b = await readJson(req); const id = Number(b.req); if (!Number.isInteger(id) || !db.prepare('SELECT 1 FROM requests WHERE id = ?').get(id)) return send(res, 404, { error: 'Немає такої заявки' });
+      const r = chatAct(id, b, me.name); return r.error ? send(res, 400, r) : send(res, 200, r); }
+  }
+  return null;
+}
+
 createServer(async (req, res) => {
   try {
     const url = new URL(req.url, 'http://localhost');
@@ -299,9 +500,17 @@ createServer(async (req, res) => {
       tries.delete(ipOf(req)); startSession(req, res, u.login); return send(res, 200, { user: publicUser(u) });
     }
     if (p === '/api/logout' && req.method === 'POST') { const t = cookies(req).frendt_sid; if (t) U.sDel.run(t); res.setHeader('Set-Cookie', 'frendt_sid=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0'); return send(res, 200, { ok: true }); }
+    // Ringostat сам надсилає сюди кожен дзвінок (вебхук); захист — секретний token в адресі
+    if (p === '/api/ringostat/hook' && req.method === 'POST') {
+      if (url.searchParams.get('token') !== RS_TOKEN) return send(res, 403, { error: 'token' });
+      const b = await readBody(req); const list = Array.isArray(b) ? b : (Array.isArray(b.calls) ? b.calls : [b]);
+      return send(res, 200, { ok: true, stored: storeCalls(list) });
+    }
     if (p.startsWith('/api/')) {
       const me = whoami(req); if (!me) return send(res, 401, { error: 'auth' });
       const admin = me.role === 'admin';
+      { const handled = await ringostatRoutes(req, res, p, url, me, admin); if (handled !== null) return; }
+      { const handled = await chatRoutes(req, res, p, url, me); if (handled !== null) return; }
       if (p === '/api/leads' && req.method === 'GET') {
         res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'private, max-age=300', 'X-Content-Type-Options': 'nosniff' });
         return res.end(getLeadsJson());

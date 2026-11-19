@@ -537,6 +537,177 @@ body.locked .app,body.locked header,body.locked aside,body.locked main{visibilit
 .client-deals tr[data-client-deal]:hover td{background:#f2faf5}
 .client-deals-empty{margin:0;color:var(--muted);font-size:13px}
 
+/* картка клієнта на весь екран + стрічка дзвінків Ringostat */
+#clientForm label{color:#00953b}
+#modal.cl-wide{width:min(1440px,97vw)!important;max-height:94vh;display:flex;flex-direction:column;overflow:hidden}
+#modal.cl-wide>.modal-head{flex:0 0 auto}
+.clw{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);min-height:0;flex:1 1 auto}
+.clw-left{overflow:auto;border-right:1px solid var(--line,#e3ece6);min-height:0}
+.clw-right{overflow:auto;background:#f2faf5;padding:14px 16px 20px;display:flex;flex-direction:column;gap:10px;min-height:0}
+.clw-hb{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:999px;border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.15);color:#fff;font:600 13px/1 var(--hd);text-decoration:none;cursor:pointer;white-space:nowrap}
+.clw-hb:hover{background:#fff;color:#00953b}
+.clw-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.clw-kpis>div{background:#fff;border:1px solid #e3ece6;border-radius:12px;padding:9px 11px}
+.clw-kpis b{display:block;font:700 20px/1.1 var(--hd);color:#1a1a1a}.clw-kpis b.red{color:#c62828}
+.clw-kpis span{font-size:12px;color:#6f6f6f}
+.clw-next{display:flex;align-items:center;gap:10px;background:#fff7e6;border:1px solid #f6d79a;border-left:4px solid var(--nc);border-radius:12px;padding:9px 12px}
+.clw-next b{font:700 13px/1.2 var(--hd);letter-spacing:.03em;color:#b45309}.clw-next>div{flex:1;color:#7a5a1c;font-size:13px}
+.clw-flag{font-size:18px;color:#b45309}
+.clw-compose{display:flex;gap:8px;align-items:flex-start;background:#fff;border:1px solid #e3ece6;border-radius:12px;padding:8px 10px}
+.clw-compose textarea{flex:1;border:0;outline:0;resize:none;font:inherit;font-size:14px;padding:5px 2px;min-height:26px;background:transparent}
+.clw-add{border:0;background:#00953b;color:#fff;border-radius:999px;height:32px;padding:0 14px;font:600 12.5px/1 var(--hd);cursor:pointer}
+.clw-ctx{font-size:12px;color:#00953b;margin-top:-4px}.clw-ctx button{border:0;background:none;color:#c62828;cursor:pointer;font-size:14px}
+.clw-chips{display:flex;gap:6px;flex-wrap:wrap}
+.clw-chip{border:1px solid #e3ece6;background:#fff;color:#4d4d4d;border-radius:999px;padding:7px 13px;font:600 12.5px/1 var(--hd);cursor:pointer}
+.clw-chip.on{background:#00953b;border-color:#00953b;color:#fff}
+.clw-info{background:#fff;border:1px dashed #b3dfc4;border-radius:12px;padding:10px 12px;color:#4d4d4d;font-size:13px}
+.clw-feed{display:flex;flex-direction:column;gap:8px}
+.clw-day{text-align:center;font:600 11px/1 var(--hd);letter-spacing:.07em;text-transform:uppercase;color:#7a8a80;margin:6px 0 0}
+.clw-ev{background:#fff;border-radius:12px;padding:10px 12px;box-shadow:0 1px 2px rgba(0,0,0,.07);border-left:4px solid var(--cc)}
+.clw-click{cursor:pointer}.clw-click:hover{box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.clw-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.clw-foot{margin-top:8px}
+.clw-av{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font:700 10.5px/1 var(--hd);color:#fff;flex:0 0 auto}
+.clw-pill{font:700 11px/1 var(--hd);letter-spacing:.06em;text-transform:uppercase;color:var(--cc);background:color-mix(in srgb,var(--cc) 11%,#fff);padding:5px 8px 4px;border-radius:6px;white-space:nowrap}
+.clw-mut{color:#6f6f6f;font-size:12.5px}.clw-row>.clw-mut:first-of-type{margin-left:auto}.clw-foot .clw-mut{flex:1;margin-left:0}
+.clw-text{margin-top:7px;color:#333;font-size:13.5px;line-height:1.45}
+.clw-sm{border:1px solid #e3ece6;background:#fff;color:#4d4d4d;border-radius:999px;padding:5px 10px;font:600 11.5px/1 var(--hd);cursor:pointer;text-decoration:none;white-space:nowrap}
+.clw-sm:hover{border-color:#00953b;color:#00953b}
+.clw-stars{display:inline-flex}.clw-stars button{border:0;background:none;color:#d6dcd8;font-size:16px;cursor:pointer;padding:0 1px}.clw-stars button.on,.clw-stars:hover button{color:#f0a020}.clw-stars button:hover~button{color:#d6dcd8}
+.clw-player{display:flex;align-items:center;gap:10px;margin-top:9px;background:#f2faf5;border-radius:10px;padding:7px 10px}
+.clw-play{width:30px;height:30px;border-radius:50%;border:0;background:#00953b;color:#fff;cursor:pointer;font-size:12px;flex:0 0 auto}
+.clw-bar{flex:1;height:6px;background:#ccead8;border-radius:6px;cursor:pointer;overflow:hidden}.clw-bar i{display:block;height:100%;width:0;background:#00953b}
+.clw-time{font-size:12px;color:#4d4d4d;white-space:nowrap}
+.clw-speed{border:0;background:none;font:700 12px/1 var(--hd);color:#00953b;cursor:pointer;min-width:30px}
+.clw-dl{color:#7a8a80;text-decoration:none;font-size:16px}
+.clw-empty{color:#7a8a80;text-align:center;padding:16px}
+@media (max-width:900px){.clw{grid-template-columns:1fr;overflow:auto}.clw-left,.clw-right{overflow:visible}.clw-hb span{display:none}}
+/* обговорення заявки поруч із заявкою */
+#drawer.with-chat{width:min(1280px,98vw);overflow:hidden}
+#drawer.with-chat #drawerContent{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);height:100%}
+.dc-left{overflow:auto;min-height:0;border-right:1px solid #e3ece6}
+.dc-chat{display:flex;flex-direction:column;min-height:0;background:#fff}
+.ch-head{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid #e3ece6;background:#fff}
+.ch-head h3{font:700 17px/1.1 var(--hd);margin:0;color:#1a1a1a}
+.ch-head p{margin:3px 0 0;color:#6f6f6f;font-size:12.5px}
+.ch-head select{border:1px solid #e3ece6;border-radius:8px;padding:2px 6px;font-size:12px}
+.ch-stack{display:flex;margin-left:auto}.ch-stack .ch-av{border:2px solid #fff;margin-left:-8px}
+.ch-addm{border:1px solid #e3ece6;background:#fff;border-radius:999px;padding:7px 12px;font:600 12px/1 var(--hd);color:#00953b;cursor:pointer;white-space:nowrap}
+.ch-people{display:flex;flex-wrap:wrap;gap:6px;padding:10px 16px;border-bottom:1px solid #e3ece6;background:#f7fbf8}
+.ch-chip{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #e3ece6;border-radius:999px;padding:3px 8px 3px 3px;font-size:12.5px}
+.ch-chip button{border:0;background:none;color:#b0b8b3;cursor:pointer;font-size:15px;line-height:1}.ch-chip button:hover{color:#e53935}
+.ch-people select{border:1px dashed #00953b;border-radius:999px;padding:4px 10px;color:#00953b;font:600 12px/1 var(--hd);background:#fff}
+.ch-av{width:34px;height:34px;border-radius:50%;display:inline-grid;place-items:center;color:#fff;font:700 12px/1 var(--hd);flex:0 0 auto}
+.ch-av.s{width:28px;height:28px;font-size:10.5px}.ch-av.xs{width:22px;height:22px;font-size:9px}
+.ch-msgs{flex:1;overflow:auto;padding:12px 16px;background:#f2faf5;display:flex;flex-direction:column;gap:3px;min-height:0}
+.ch-day{align-self:center;background:#fff;border:1px solid #e3ece6;color:#6f6f6f;border-radius:999px;padding:4px 12px;font:600 11px/1 var(--hd);letter-spacing:.06em;text-transform:uppercase;margin:10px 0 6px}
+.ch-sys{align-self:center;color:#5d6b63;font-size:12.5px;background:#e3f1e8;border-radius:10px;padding:5px 12px;margin:4px 0;text-align:center;max-width:90%}
+.ch-empty{color:#6f6f6f;text-align:center;margin:auto;max-width:300px}
+.ch-m{display:flex;gap:8px;max-width:88%;margin-top:6px}.ch-m.cont{margin-top:1px}.ch-m.cont .ch-av{visibility:hidden}
+.ch-m.mine{align-self:flex-end;flex-direction:row-reverse}
+.ch-bub{background:#fff;border-radius:4px 14px 14px 14px;padding:7px 11px 6px;box-shadow:0 1px 1px rgba(0,0,0,.06);min-width:90px;position:relative;font-size:14px}
+.ch-m.mine .ch-bub{background:#dcf3e4;border-radius:14px 4px 14px 14px}
+.ch-who{font:700 12.5px/1.2 var(--hd);margin-bottom:2px}.ch-who span{color:#6f6f6f;font-weight:500}
+.ch-txt{white-space:pre-wrap;word-break:break-word;line-height:1.45}
+.ch-meta{text-align:right;font-size:11px;color:#6f6f6f;margin-top:2px}
+.ch-men{color:#1f6fd1;font-weight:600;background:#e8f1fd;border-radius:4px;padding:0 3px}.ch-men.me{color:#b45309;background:#fff2d6}
+.ch-q{border-left:3px solid #00953b;background:rgba(0,149,59,.07);border-radius:4px;padding:4px 8px;margin:2px 0 5px;font-size:12.5px;color:#4d4d4d}.ch-q b{display:block;color:#00953b;font-size:12px}
+.ch-file{display:inline-flex;align-items:center;gap:6px;background:#f3f6f4;border:1px solid #e3ece6;border-radius:8px;padding:4px 9px;margin:3px 3px 0 0;font-size:12.5px}
+.ch-file button{border:0;background:none;color:#e53935;cursor:pointer}
+.ch-reacts{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}.ch-reacts button{border:1px solid #e3ece6;background:#fff;border-radius:999px;padding:1px 7px;font-size:12px;cursor:pointer}.ch-reacts button.on{border-color:#00953b;background:#e6f4eb}
+.ch-tools{position:absolute;top:-14px;right:6px;display:none;gap:2px;background:#fff;border:1px solid #e3ece6;border-radius:999px;padding:2px 4px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.ch-m:hover .ch-tools{display:flex}.ch-tools button{border:0;background:none;font-size:13px;padding:2px 4px;border-radius:6px;cursor:pointer}.ch-tools button:hover{background:#e6f4eb}
+.ch-join{display:flex;align-items:center;gap:10px;margin:10px 14px;background:#fff7e6;border:1px solid #f6d79a;border-radius:12px;padding:10px 12px;color:#7a5a1c;font-size:13px}
+.ch-join button{margin-left:auto;border:0;background:#00953b;color:#fff;border-radius:999px;padding:9px 16px;font:700 13px/1 var(--hd);cursor:pointer}
+.ch-comp{border-top:1px solid #e3ece6;padding:10px 12px;position:relative;background:#fff}
+.ch-replybar{display:flex;align-items:center;gap:6px;background:#e6f4eb;border-radius:8px;padding:5px 9px;margin-bottom:6px;font-size:12.5px}.ch-replybar button{margin-left:auto;border:0;background:none;color:#e53935;font-size:16px;cursor:pointer}
+.ch-files{margin-bottom:6px}
+.ch-row{display:flex;align-items:flex-end;gap:8px}
+.ch-row textarea{flex:1;resize:none;border:1px solid #e3ece6;border-radius:12px;padding:9px 12px;min-height:42px;max-height:140px;outline:0;background:#f2faf5;font:inherit;font-size:14px}
+.ch-row textarea:focus{border-color:#00953b;background:#fff}
+.ch-ico{width:42px;height:42px;border-radius:50%;border:1px solid #e3ece6;background:#fff;display:grid;place-items:center;font-size:18px;cursor:pointer;flex:0 0 auto}
+.ch-send{width:42px;height:42px;border-radius:50%;border:0;background:#00953b;color:#fff;font-size:17px;cursor:pointer;flex:0 0 auto}
+.ch-pop{position:absolute;bottom:100%;left:62px;background:#fff;border:1px solid #e3ece6;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:260px;max-height:240px;overflow:auto;display:none;z-index:5}
+.ch-pop div{display:flex;align-items:center;gap:8px;padding:7px 10px;cursor:pointer}.ch-pop div.on,.ch-pop div:hover{background:#e6f4eb}
+.ch-pop span{display:flex;flex-direction:column}.ch-pop small{color:#6f6f6f}
+.ch-badge{margin-left:auto;font:700 11px/1 var(--hd);color:#00953b;background:#e6f4eb;border-radius:999px;padding:4px 7px;white-space:nowrap}
+.ch-badge.new{background:#e53935;color:#fff}.ch-badge.at{background:#f0a020;color:#fff}
+@media (max-width:900px){#drawer.with-chat{overflow:auto}#drawer.with-chat #drawerContent{display:block;height:auto}.dc-left{overflow:visible;border:0}.dc-chat{height:85vh;border-top:1px solid #e3ece6}}
+.ch-people[hidden]{display:none}
+
+/* фон FRENDT у чатах обговорення */
+.ch-msgs{background-color:#eef7f1;background-image:url("data:image/svg+xml,%3Csvg opacity=%22.07%22 viewBox=%220 0 313.00 45.99%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cpath fill=%22%2300953b%22 d=%22M 14.81 11.04 L 14.81 17.64 L 34.17 17.64 L 34.17 28.22 L 14.81 28.22 L 14.81 45.99 L 0.00 45.99 L 0.00 0.00 L 37.33 0.00 L 37.33 11.04 Z M 14.81 11.04%22/%3E%3Cpath fill=%22%2300953b%22 d=%22M 267.90 0.01 L 267.90 11.77 L 283.07 11.77 L 283.07 45.99 L 297.90 45.99 L 297.90 11.77 L 312.99 11.77 L 312.99 0.01 Z M 267.90 0.01%22/%3E%3Cpath fill=%22%2300953b%22 d=%22M 86.14 38.85 L 80.93 29.12 L 79.65 26.75 C 80.11 26.58 80.52 26.42 80.93 26.17 C 83.14 25.19 84.87 23.75 86.14 21.95 C 86.22 21.91 86.26 21.83 86.31 21.74 C 87.82 19.45 88.60 16.90 88.60 14.11 C 88.60 11.57 88.03 9.23 86.80 7.06 C 86.59 6.69 86.38 6.36 86.14 6.03 C 85.03 4.35 83.48 2.96 81.51 1.93 C 81.34 1.85 81.14 1.73 80.93 1.65 C 78.71 0.54 76.09 0.01 73.01 0.01 L 44.76 0.01 L 44.76 45.98 L 59.60 45.98 L 59.60 29.21 L 65.10 29.21 L 73.30 45.98 L 89.95 45.98 Z M 72.27 17.76 C 71.49 18.58 70.51 18.99 69.32 18.99 L 59.60 18.99 L 59.60 10.51 L 69.32 10.51 C 70.51 10.51 71.49 10.92 72.27 11.69 C 73.10 12.51 73.50 13.50 73.50 14.69 C 73.50 15.92 73.10 16.95 72.27 17.76%22/%3E%3Cpath fill=%22%2300953b%22 d=%22M 209.19 0.01 L 209.19 45.98 L 196.23 45.98 L 176.82 23.67 L 176.82 45.98 L 163.21 45.98 L 163.21 0.01 L 176.12 0.01 L 195.53 22.65 L 195.53 0.01 Z M 209.19 0.01%22/%3E%3Cpath fill=%22%2300953b%22 d=%22M 258.73 7.31 C 254.76 2.42 248.23 0.01 239.13 0.01 L 219.11 0.01 L 219.11 45.98 L 239.13 45.98 C 248.23 45.98 254.76 43.56 258.73 38.68 C 261.81 34.91 263.33 29.70 263.33 23.02 C 263.33 16.33 261.81 11.12 258.73 7.31 M 248.15 25.02 C 248.15 31.67 245.03 34.95 238.84 34.95 L 233.92 34.95 L 233.92 11.04 L 238.84 11.04 C 245.03 11.04 248.15 14.36 248.15 21.00 Z M 248.15 25.02%22/%3E%3Cpath fill=%22%2300953b%22 d=%22M 149.84 10.59 L 97.37 10.59 L 97.37 0.01 L 155.79 0.01 Z M 149.84 10.59%22/%3E%3Cpath fill=%22%2300953b%22 d=%22M 149.84 35.40 L 97.37 35.40 L 97.37 45.98 L 155.79 45.98 Z M 149.84 35.40%22/%3E%3Cpath fill=%22%2300953b%22 d=%22M 145.81 28.22 L 97.39 28.22 L 97.39 17.64 L 145.81 17.64 L 142.87 22.99 Z M 145.81 28.22%22/%3E%3C/svg%3E"),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='620' height='120' viewBox='0 0 620 120' fill='none' stroke='%2300953b' stroke-width='1.3'%3E%3Cpath opacity='.10' d='M0 40C60 10 130 6 200 14s120-14 200-12 140 18 220 8'/%3E%3Cpath opacity='.07' d='M0 62c70-24 150-26 220-16s110-16 190-14 130 14 210 6'/%3E%3Cpath opacity='.05' d='M0 84c80-18 160-18 230-8s120-14 190-10 120 10 200 4'/%3E%3Cpath opacity='.08' d='M0 106c60-20 140-22 210-14s120-12 200-10 130 12 210 6'/%3E%3C/svg%3E"),linear-gradient(180deg,#f4fbf6 0%,#e7f4ec 100%);background-repeat:no-repeat,repeat,no-repeat;background-position:center 55%,0 0,0 0;background-size:min(70%,420px) auto,620px 120px,100% 100%;background-attachment:scroll,local,scroll}
+.ch-bub{box-shadow:0 1px 2px rgba(0,60,25,.10)}
+.ch-day{background:rgba(255,255,255,.92)}
+.ch-sys{background:rgba(214,236,222,.92)}
+/* праворуч від заявки: вкладки «Телефонія» і «Чат» */
+#drawer.with-chat .dc-right{display:flex;flex-direction:column;min-height:0;background:#fff}
+.dc-tabs{display:flex;gap:6px;padding:10px 12px;border-bottom:1px solid #e3ece6;background:#f7fbf8;flex:0 0 auto}
+.dc-tabs button{flex:1;height:40px;border:1px solid #e3ece6;background:#fff;border-radius:999px;font:700 14px/1 var(--hd);letter-spacing:.03em;color:#4d4d4d;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.dc-tabs button.on{background:#00953b;border-color:#00953b;color:#fff}
+.dc-tbadge{min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#e6f4eb;color:#00953b;font:700 11px/20px var(--hd);display:inline-block}
+.dc-tbadge:empty{display:none}.dc-tbadge.new{background:#e53935;color:#fff}.dc-tbadge.at{background:#f0a020;color:#fff}
+.dc-tabs button.on .dc-tbadge:not(.new):not(.at){background:rgba(255,255,255,.25);color:#fff}
+.dc-pane{flex:1;min-height:0}.dc-pane[hidden]{display:none!important}
+#dcTel{overflow:auto;padding:14px 16px;background:#f2faf5}
+.tel-head h3{font:700 17px/1.1 var(--hd);margin:0}.tel-head p{margin:3px 0 10px;color:#6f6f6f;font-size:12.5px}
+.tel-phones{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.tel-ph{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #e3ece6;border-radius:12px;padding:9px 12px;text-decoration:none;color:#1a1a1a}
+.tel-ph span{width:30px;height:30px;border-radius:50%;background:#00953b;color:#fff;display:grid;place-items:center}
+.tel-ph small{color:#6f6f6f;margin-left:4px}
+.tel-ph:hover{border-color:#00953b}
+.tel-soon{background:#fff;border:1px dashed #b3dfc4;border-radius:14px;padding:22px 18px;text-align:center;color:#4d4d4d}
+.tel-soon b{display:block;font:700 16px/1.2 var(--hd);color:#00953b;margin:8px 0 6px}.tel-soon p{margin:0 auto;max-width:380px;font-size:13.5px}
+.tel-ic{width:52px;height:52px;border-radius:50%;background:#e6f4eb;color:#00953b;display:grid;place-items:center;margin:0 auto;font-size:24px}
+.tel-kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.tel-kpis>div{background:#fff;border:1px solid #e3ece6;border-radius:12px;padding:9px 11px}.tel-kpis b{display:block;font:700 20px/1.1 var(--hd)}.tel-kpis b.red{color:#c62828}.tel-kpis span{font-size:12px;color:#6f6f6f}
+.tel-list{display:flex;flex-direction:column;gap:8px}
+.tel-call{background:#fff;border-radius:12px;padding:10px 12px;border-left:4px solid var(--cc);box-shadow:0 1px 2px rgba(0,0,0,.07)}
+.tel-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tel-pill{font:700 11px/1 var(--hd);letter-spacing:.06em;text-transform:uppercase;color:var(--cc);background:color-mix(in srgb,var(--cc) 11%,#fff);padding:5px 8px 4px;border-radius:6px}
+.tel-mut{color:#6f6f6f;font-size:12.5px}.tel-emp{margin-left:auto}
+.tel-call audio{width:100%;height:34px;margin-top:8px}
+.tel-empty{color:#6f6f6f;text-align:center;padding:14px}
+/* сповіщення про згадки — справа знизу, як у Telegram */
+#chNotifs{position:fixed;right:18px;bottom:18px;z-index:300;display:flex;flex-direction:column-reverse;gap:10px;width:min(380px,calc(100vw - 24px));pointer-events:none}
+.nt{pointer-events:auto;position:relative;display:flex;gap:11px;background:#fff;border-radius:14px;padding:12px 34px 12px 12px;box-shadow:0 10px 30px rgba(0,40,15,.22),0 0 0 1px rgba(0,149,59,.15);border-left:5px solid #00953b;cursor:pointer;animation:ntIn .28s ease-out}
+.nt:hover{box-shadow:0 12px 34px rgba(0,40,15,.28),0 0 0 1px rgba(0,149,59,.35)}
+@keyframes ntIn{from{transform:translateX(30px);opacity:0}to{transform:none;opacity:1}}
+.nt-x{position:absolute;top:6px;right:8px;width:24px;height:24px;border:0;border-radius:50%;background:#f1f4f2;color:#6f6f6f;font-size:16px;line-height:1;cursor:pointer}
+.nt-x:hover{background:#fde8e8;color:#e53935}
+.nt-b{min-width:0;flex:1}
+.nt-top{display:flex;flex-wrap:wrap;align-items:baseline;gap:5px}.nt-top b{font:700 14px/1.2 var(--hd)}.nt-top span{font-size:12px;color:#6f6f6f}
+.nt-req{font:600 12px/1.2 var(--hd);color:#00953b;margin:3px 0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nt-txt{font-size:13.5px;line-height:1.4;color:#1a1a1a;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.nt-go{font:600 12px/1 var(--hd);color:#00953b;margin-top:7px}
+.nt-more{pointer-events:auto;align-self:flex-end;background:#1a1a1a;color:#fff;border-radius:999px;padding:6px 8px 6px 12px;font-size:12px;display:flex;gap:8px;align-items:center}
+.nt-more button{border:0;background:rgba(255,255,255,.18);color:#fff;border-radius:999px;padding:3px 9px;cursor:pointer;font-size:11.5px}
+/* чат: закріплене, швидкі фрази, емодзі, «прочитали», перетягування файлів, дзвіночок */
+.ch-pin{display:flex;align-items:center;gap:10px;padding:8px 14px;background:#fffaf0;border-bottom:1px solid #f6d79a;cursor:pointer}
+.ch-pin>span{font-size:16px}.ch-pin b{font:700 12px/1.2 var(--hd);color:#b45309}.ch-pin div div{font-size:13px;color:#4d4d4d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:520px}
+.ch-pin>div{flex:1;min-width:0}.ch-pin button{border:0;background:none;color:#b0b8b3;font-size:16px;cursor:pointer}
+.ch-flash .ch-bub{animation:chFlash 1.5s ease}
+@keyframes chFlash{0%,60%{box-shadow:0 0 0 3px #f0a020}100%{box-shadow:0 1px 1px rgba(0,0,0,.06)}}
+.ch-seen{align-self:flex-end;display:flex;align-items:center;gap:2px;font-size:11.5px;color:#6f6f6f;margin-top:2px}.ch-seen .ch-av{margin-left:-4px;border:2px solid #f2faf5}.ch-seen span{margin-left:6px}
+.ch-quick{display:flex;gap:6px;overflow-x:auto;padding-bottom:7px;scrollbar-width:none}.ch-quick::-webkit-scrollbar{display:none}
+.ch-quick button{flex:0 0 auto;border:1px solid #cfe7d8;background:#f2faf5;color:#1f6a3c;border-radius:999px;padding:5px 10px;font-size:12px;cursor:pointer;white-space:nowrap}
+.ch-quick button:hover{background:#e6f4eb;border-color:#00953b}
+.ch-emo{position:absolute;bottom:100%;left:56px;background:#fff;border:1px solid #e3ece6;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:8px;display:grid;grid-template-columns:repeat(6,34px);gap:4px;z-index:6}
+.ch-emo[hidden]{display:none}.ch-emo button{border:0;background:none;font-size:20px;border-radius:8px;cursor:pointer;height:34px}.ch-emo button:hover{background:#e6f4eb}
+.dc-chat.ch-drop{outline:3px dashed #00953b;outline-offset:-10px}
+.dc-chat.ch-drop::after{content:"Відпустіть файли, щоб прикріпити";position:absolute;inset:0;display:grid;place-items:center;font:700 18px/1 var(--hd);color:#00953b;background:rgba(230,244,235,.75);pointer-events:none}
+.dc-chat{position:relative}
+#notifyBtn{position:relative}
+.bell-n{position:absolute;top:-6px;right:-6px;min-width:19px;height:19px;padding:0 5px;border-radius:999px;background:#e53935;color:#fff;font:700 11px/19px var(--hd);box-shadow:0 0 0 2px #00953b}
+.bell-n[hidden]{display:none}
+#bellPanel{position:fixed;top:64px;right:18px;width:min(380px,94vw);max-height:70vh;overflow:auto;background:#fff;border-radius:14px;box-shadow:0 14px 40px rgba(0,0,0,.22);z-index:320}
+.bp-h{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#00953b;color:#fff;font:700 15px/1 var(--hd);position:sticky;top:0}
+.bp-h button{border:0;background:rgba(255,255,255,.2);color:#fff;border-radius:50%;width:26px;height:26px;cursor:pointer;font-size:16px}
+.bp-i{display:flex;gap:10px;padding:10px 14px;border-bottom:1px solid #eef3f0;cursor:pointer}.bp-i:hover{background:#f7fbf8}
+.bp-i.new{background:#fffaf0}.bp-i b{font:700 13px/1.2 var(--hd)}.bp-i small{color:#6f6f6f}
+.bp-r{font:600 12px/1.2 var(--hd);color:#00953b;margin:2px 0}.bp-t{font-size:12.5px;color:#4d4d4d}
+.bp-e{padding:22px;text-align:center;color:#6f6f6f}
+#drawer.show ~ #chNotifs{right:auto;left:18px}
 </style>
 </head>
 <body>
@@ -766,9 +937,9 @@ function leadTable(list,q){return `<div class="lead-wrap"><table class="lead-tab
 function ensureLeads(){buildLeadIdx()}
 function renderLeads(){ensureLeads();const q=leadState.q.trim().toLowerCase();const resp=[...new Set(ALL.map(r=>r[8]).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'uk'));const reg=[...new Set(ALL.map(r=>r[2]).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'uk'));
  const list=[];ALL.forEach((r,i)=>{if(leadState.resp&&r[8]!==leadState.resp)return;if(leadState.region&&r[2]!==leadState.region)return;if(q&&!leadMatch(i,q))return;list.push([r,i])});
- root.innerHTML=`<section class="lead-page"><div class="toolbar"><input id="leadQ" placeholder="Пошук у таблиці: компанія, контакт, телефон, товар, коментар…" value="${esc(leadState.q)}"><select id="leadResp"><option value="">Усі відповідальні</option>${resp.map(x=>`<option${x===leadState.resp?' selected':''}>${esc(x)}</option>`).join('')}</select><select id="leadReg"><option value="">Усі області</option>${reg.map(x=>`<option${x===leadState.region?' selected':''}>${esc(x)}</option>`).join('')}</select><span class="count-pill">${list.length} записів</span></div>${LEADS.length?'':'<p class="page-note">Дані лідогенерації завантажуються…</p>'}${leadTable(list.slice(0,leadState.limit),q)}${list.length>leadState.limit?`<div class="more-row"><button class="cancel-btn" id="leadMore">Показати ще (${list.length-leadState.limit})</button></div>`:''}<p class="page-note">Натисніть на рядок, щоб побачити повний коментар. Дані з таблиці «Для лідогенераторів».</p></section>`;
+ root.innerHTML=`<section class="lead-page"><div class="toolbar"><input id="leadQ" placeholder="Пошук у таблиці: компанія, контакт, телефон, товар, коментар…" value="${esc(leadState.q)}"><span class="count-pill">${list.length} записів</span></div>${LEADS.length?'':'<p class="page-note">Дані лідогенерації завантажуються…</p>'}${leadTable(list.slice(0,leadState.limit),q)}${list.length>leadState.limit?`<div class="more-row"><button class="cancel-btn" id="leadMore">Показати ще (${list.length-leadState.limit})</button></div>`:''}<p class="page-note">Натисніть на рядок, щоб побачити повний коментар. Дані з таблиці «Для лідогенераторів».</p></section>`;
  const qi=root.querySelector('#leadQ');qi.oninput=()=>{leadState.q=qi.value;leadState.limit=100;const p=qi.selectionStart;renderLeads();bindLeadRows();const n=root.querySelector('#leadQ');n.focus();n.setSelectionRange(p,p)};
- root.querySelector('#leadResp').onchange=e=>{leadState.resp=e.target.value;leadState.limit=100;render()};root.querySelector('#leadReg').onchange=e=>{leadState.region=e.target.value;leadState.limit=100;render()};
+ 
  const m=root.querySelector('#leadMore');if(m)m.onclick=()=>{leadState.limit+=200;render()};}
 function bindLeadRows(){root.querySelectorAll('[data-lead]').forEach(tr=>tr.onclick=()=>{const i=+tr.dataset.lead;leadState.open.has(i)?leadState.open.delete(i):leadState.open.add(i);const n=tr.querySelector('.num').textContent;const q=currentView==='leads'?leadState.q.trim().toLowerCase():currentView==='search'?query:'';tr.outerHTML=leadRow(ALL[i],i,n,q);bindLeadRows()})}
 /* «Модель пошуку інформації по клієнту»: пошук за номером телефону, ЄДРПОУ або назвою компанії */
@@ -905,7 +1076,7 @@ const visible=()=>requests.filter(r=>{const c=cl(r);return(!query||[c.client,r.e
 function setView(view){currentView=view;document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===view));const t={kanban:'Заявки',requests:'Додавання заявок',clients:'База клієнтів',directory:'Довідник',directions:'Списки для напрямків',tasks:'Задачі менеджерів',leads:'Статистика лідогенераторів',leadsearch:'Пошук',search:'Пошук'};document.querySelector('#pageTitle').textContent=t[view]||'CRM';render()}
 const canDirections=()=>!me||isAdmin();
 function navRoles(){const b=document.querySelector('#nav [data-view="directions"]');if(b)b.hidden=!canDirections();if(currentView==='directions'&&!canDirections()){currentView='kanban';document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('active',x.dataset.view==='kanban'));document.querySelector('#pageTitle').textContent='Заявки'}}
-function render(){navRoles();const oldBoard=root.querySelector('.board');if(oldBoard)boardScroll=oldBoard.scrollLeft;const fn={kanban:renderKanban,requests:renderRequests,clients:renderClients,directory:renderDirectory,directions:renderDirections,tasks:renderTasks,leads:renderLeads,leadsearch:renderLeadSearch,search:renderSearch}[currentView]||renderKanban;fn();bind();bindLeadRows();bindSearchLinks();addBars()}
+function render(){navRoles();const oldBoard=root.querySelector('.board');if(oldBoard)boardScroll=oldBoard.scrollLeft;const fn={kanban:renderKanban,requests:renderRequests,clients:renderClients,directory:renderDirectory,directions:renderDirections,tasks:renderTasks,leads:renderLeads,leadsearch:renderLeadSearch,search:renderSearch}[currentView]||renderKanban;fn();bind();bindLeadRows();bindSearchLinks();addBars();refreshChatBadges()}
 function toolbar(active='kanban'){return `<div class="toolbar"><div class="view-tabs"><button class="${active==='kanban'?'active':''}" data-mode="kanban">КАНБАН</button><button class="${active==='list'?'active':''}" data-mode="list">СПИСОК</button></div><input id="pageSearch" placeholder="Пошук…" value="${esc(query)}"><select id="managerFilter">${opts(MANAGERS,managerFilter,'Усі менеджери')}</select><select id="categoryFilter">${opts(CATEGORIES,categoryFilter,'Усі категорії')}</select><div class="grow"></div><span class="counter">${visible().length} заявок</span></div>`}
 
 /* ---------- КАНБАН ---------- */
@@ -1163,6 +1334,221 @@ async function boot(){let r=null;try{r=await fetch('api/me',{headers:API_H,cache
  fetch('api/leads',{headers:API_H,cache:'no-store'}).then(r=>r.ok?r.json():null).then(x=>{if(x&&Array.isArray(x.leads)){LEADS=x.leads;leadIdx=null;if(['leads','leadsearch','search'].includes(currentView))render()}}).catch(()=>{});
  const ok=await pullServer(true);if(ok){syncTimer=setInterval(()=>pullServer(),3000);addEventListener('focus',()=>pullServer());document.addEventListener('visibilitychange',()=>{if(!document.hidden)pullServer()})}}
 boot();
+
+
+/* ===== Картка клієнта на весь екран: зліва форма, справа стрічка дзвінків Ringostat, коментарів і заявок ===== */
+const CLW_MONTHS=['січня','лютого','березня','квітня','травня','червня','липня','серпня','вересня','жовтня','листопада','грудня'];
+const clwDate=s=>{s=String(s||'').trim();let m=/^(\d{4})-(\d\d)-(\d\d)(?:[ T](\d\d):(\d\d))?/.exec(s);if(m)return new Date(+m[1],m[2]-1,+m[3],+(m[4]||0),+(m[5]||0));m=/^(\d{1,2})\.(\d{1,2})\.(\d{4})/.exec(s);if(m)return new Date(+m[3],m[2]-1,+m[1]);return null};
+const clwDay=d=>`${d.getDate()} ${CLW_MONTHS[d.getMonth()]}${d.getFullYear()!==new Date().getFullYear()?' '+d.getFullYear():''}`;
+const clwHM=d=>`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+const clwDur=s=>{s=Math.max(0,Math.round(+s||0));return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`};
+const clwIni=n=>String(n||'?').trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase()||'?';
+const clwCol=n=>{let h=0;for(const ch of String(n||''))h=(h*31+ch.charCodeAt(0))>>>0;return ['#e8662a','#2f7fd1','#7a5af5','#00953b','#c2185b','#00838f','#8d6e63','#5c6bc0'][h%8]};
+const clwTel=p=>{const d=String(p||'').replace(/\D/g,'');return d?(d.length===10&&d[0]==='0'?'+38'+d:'+'+d):''};
+const clwState={code:'',calls:[],notes:[],filter:'all',ctxCall:'',configured:null,loading:false};
+const _openClientModalBase=openClientModal;
+openClientModal=function(code,prefill){_openClientModalBase(code,prefill);const c=code?findClient(code):null;if(c)setTimeout(()=>clientWide(c),0)};
+function clientWide(c){
+ const m=document.querySelector('#modal');if(!m||!m.querySelector('#clientForm')||m.querySelector('.clw'))return;
+ const head=m.querySelector('.modal-head');m.classList.add('cl-wide');
+ const tel=clwTel(c.phone1||c.phone2);
+ head.querySelector('.close')?.insertAdjacentHTML('beforebegin',`${tel?`<a class="clw-hb" href="tel:${esc(tel)}"><span>☎</span> Подзвонити</a>`:''}<button type="button" class="clw-hb" data-clw="req">+ Заявка</button><button type="button" class="clw-hb" data-clw="task">+ Задача</button>`);
+ const left=document.createElement('div');left.className='clw-left';[...m.children].filter(x=>x!==head).forEach(x=>left.appendChild(x));
+ const right=document.createElement('div');right.className='clw-right';right.id='clwRight';
+ const wrap=document.createElement('div');wrap.className='clw';wrap.append(left,right);m.appendChild(wrap);
+ head.querySelector('[data-clw="req"]').onclick=()=>{closeModal();openRequestModal();setTimeout(()=>{const e=document.querySelector('#requestForm [name=edrpou]');if(e){e.value=c.edrpou;e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}))}},30)};
+ head.querySelector('[data-clw="task"]').onclick=()=>{openTask(0);const f=document.querySelector('#taskForm');if(!f)return;const set=(k,v)=>{const e=f.elements[k];if(e&&v&&!e.disabled){e.value=v;e.dispatchEvent(new Event('input',{bubbles:true}))}};set('edrpou',c.edrpou);set('company',c.client);set('region',c.region);set('district',c.district);set('address',c.address);set('lpr',c.contact);set('phone',c.phone1);set('phones',c.phone2);set('email',c.email);set('manager',c.manager)};
+ Object.assign(clwState,{code:String(c.edrpou),calls:[],notes:[],filter:'all',ctxCall:'',configured:null,loading:!!me});
+ clwRender(c);if(me)clwLoad(c)}
+async function clwLoad(c){const code=String(c.edrpou);try{const [a,b]=await Promise.all([fetch('api/calls?edrpou='+encodeURIComponent(code),{headers:API_H,cache:'no-store'}).then(r=>r.ok?r.json():{calls:[]}),fetch('api/notes?edrpou='+encodeURIComponent(code),{headers:API_H,cache:'no-store'}).then(r=>r.ok?r.json():{notes:[]})]);if(clwState.code!==code)return;Object.assign(clwState,{calls:a.calls||[],configured:a.configured!==false,notes:b.notes||[],loading:false})}catch(e){clwState.loading=false}if(clwState.code===code&&document.querySelector('#clwRight'))clwRender(c)}
+function clwEvents(c){const ev=[];const rate={};clwState.notes.forEach(n=>{if(n.call_id&&n.rating&&!rate[n.call_id])rate[n.call_id]=n.rating});
+ clwState.calls.forEach(x=>{const d=clwDate(x.at);if(d)ev.push({t:'call',d,x,rating:rate[x.id]||0})});
+ clwState.notes.forEach(n=>{if(!n.text)return;const d=new Date(n.at);if(!isNaN(d))ev.push({t:'note',d,x:n})});
+ requests.filter(r=>same(r.edrpou,c.edrpou)).forEach(r=>{const d=clwDate(r.date);if(d)ev.push({t:'req',d,x:r})});
+ return ev.sort((a,b)=>b.d-a.d)}
+function clwNext(c){const ts=(typeof TASKS!=='undefined'?TASKS:[]).filter(t=>same(t.edrpou,c.edrpou)&&tDate(t.callDate)!==null).sort((a,b)=>tDate(a.callDate)-tDate(b.callDate));return ts[0]||null}
+function clwRender(c){const R=document.querySelector('#clwRight');if(!R)return;const ev=clwEvents(c),calls=clwState.calls;
+ const mins=Math.round(calls.reduce((s,x)=>s+(+x.billsec||0),0)/60),missed=calls.filter(x=>x.missed).length;
+ const lastD=ev.filter(e=>e.t==='note'||(e.t==='call'&&!e.x.missed))[0]?.d;const days=lastD?Math.floor((Date.now()-lastD)/864e5):null;
+ const nx=clwNext(c);const nxs=nx?tStatus(nx):'';const nxCol=nx?(T_STATUS.find(s=>s.id===nxs)?.color||'#f0a020'):'';
+ const cnt=t=>ev.filter(e=>e.t===t).length;const F=clwState.filter;const shown=ev.filter(e=>F==='all'||e.t===F);
+ let lastDay='';const items=shown.map(e=>{const day=clwDay(e.d);const sep=day!==lastDay?`<div class="clw-day">${esc(day)}</div>`:'';lastDay=day;return sep+clwItem(e)}).join('');
+ const info=!me?'<div class="clw-info">Дзвінки й записи Ringostat видно в CRM на сервері (після входу).</div>':clwState.loading?'<div class="clw-info">Завантажую дзвінки…</div>':clwState.configured===false?`<div class="clw-info">Ringostat ще не підключено.${isAdmin()?' Додайте ключ у Render (RINGOSTAT_AUTH_KEY) — дзвінки з’являться тут самі.':''}</div>`:'';
+ R.innerHTML=`<div class="clw-kpis"><div><b>${calls.length}</b><span>дзвінків · ${mins} хв</span></div><div><b class="${missed?'red':''}">${missed}</b><span>пропущені</span></div><div><b>${days===null?'—':days+' дн.'}</b><span>з останнього контакту</span></div></div>
+ ${nx?`<div class="clw-next" style="--nc:${nxCol}"><span class="clw-flag">⚑</span><div><b>НАСТУПНИЙ КРОК · ${esc(nx.callDate)}</b><div>${esc(nx.task||'Задача')}${nx.manager?' · '+esc(nx.manager):''}</div></div><button type="button" class="clw-sm" data-clw-task="${nx.id}">Відкрити</button></div>`:''}
+ ${me?`<div class="clw-compose"><span class="clw-av" style="background:${clwCol(me.name)}">${esc(clwIni(me.name))}</span><textarea id="clwText" rows="1" placeholder="${clwState.ctxCall?'Коментар до дзвінка…':'Коментар, домовленість…'}"></textarea><button type="button" class="clw-add" id="clwAdd">Додати</button></div>${clwState.ctxCall?`<div class="clw-ctx">До дзвінка ${esc(clwState.ctxCall.split('|')[1]||'')} <button type="button" id="clwCtxX">×</button></div>`:''}`:''}
+ <div class="clw-chips">${[['all','Усе',ev.length],['call','Дзвінки',cnt('call')],['note','Коментарі',cnt('note')],['req','Заявки',cnt('req')]].map(([k,l,n])=>`<button type="button" class="clw-chip${F===k?' on':''}" data-clw-f="${k}">${l}${k==='all'?'':' · '+n}</button>`).join('')}</div>
+ ${info}<div class="clw-feed">${items||(clwState.loading?'':'<div class="clw-empty">Поки що подій немає.</div>')}</div>`;
+ R.querySelectorAll('[data-clw-f]').forEach(b=>b.onclick=()=>{clwState.filter=b.dataset.clwF;clwRender(c)});
+ R.querySelectorAll('[data-clw-task]').forEach(b=>b.onclick=()=>openTask(+b.dataset.clwTask));
+ R.querySelectorAll('[data-clw-req]').forEach(b=>b.onclick=()=>{closeModal();openDrawer(+b.dataset.clwReq)});
+ R.querySelectorAll('[data-clw-note]').forEach(b=>b.onclick=()=>{clwState.ctxCall=b.dataset.clwNote;clwRender(c);document.querySelector('#clwText')?.focus()});
+ R.querySelectorAll('[data-clw-rate]').forEach(b=>b.onclick=()=>{const [id,v]=b.dataset.clwRate.split('|');clwPost(c,{call_id:id,rating:+v})});
+ const x=R.querySelector('#clwCtxX');if(x)x.onclick=()=>{clwState.ctxCall='';clwRender(c)};
+ const add=R.querySelector('#clwAdd'),ta=R.querySelector('#clwText');if(add){add.onclick=()=>{const t=ta.value.trim();if(!t){ta.focus();return}clwPost(c,{text:t,call_id:clwState.ctxCall.split('|')[0]||''})};ta.oninput=()=>{ta.style.height='auto';ta.style.height=Math.min(140,ta.scrollHeight)+'px'};ta.onkeydown=e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey))add.click()}}
+ R.querySelectorAll('.clw-player').forEach(clwPlayer)}
+function clwItem(e){const x=e.x;
+ if(e.t==='call'){const miss=x.missed,cc=miss?'#c62828':x.dir==='out'?'#00953b':'#2f7fd1',lbl=miss?'Пропущений':x.dir==='out'?'Вихідний':'Вхідний',ic=miss?'✕':x.dir==='out'?'↗':'↙';const t=clwHM(e.d);const tel=clwTel(x.number);
+  return `<div class="clw-ev" style="--cc:${cc}"><div class="clw-row">${x.employee?`<span class="clw-av" style="background:${clwCol(x.employee)}" title="${esc(x.employee)}">${esc(clwIni(x.employee))}</span>`:`<span class="clw-av" style="background:${cc}">${ic}</span>`}<span class="clw-pill">${ic} ${lbl} · ${t}</span><span class="clw-mut">${miss?'':clwDur(x.billsec)}</span>${miss&&tel?`<a class="clw-sm" href="tel:${esc(tel)}">☎ Передзвонити</a>`:''}</div>
+  ${x.rec?`<div class="clw-player" data-src="api/calls/${encodeURIComponent(x.id)}/audio"><button type="button" class="clw-play" aria-label="Слухати">▶</button><div class="clw-bar"><i></i></div><span class="clw-time">0:00 / ${clwDur(x.billsec)}</span><button type="button" class="clw-speed">1×</button><a class="clw-dl" href="api/calls/${encodeURIComponent(x.id)}/audio?download=1" title="Завантажити запис">⤓</a></div>`:''}
+  <div class="clw-row clw-foot"><span class="clw-mut">${esc(x.employee||'')}${x.employee?' · ':''}${esc(x.number||'')}</span>${miss?'':`<button type="button" class="clw-sm" data-clw-note="${esc(x.id)}|${t}">💬 Коментар</button><span class="clw-stars">${[1,2,3,4,5].map(v=>`<button type="button" class="${v<=e.rating?'on':''}" data-clw-rate="${esc(x.id)}|${v}" aria-label="Оцінка ${v}">★</button>`).join('')}</span>`}</div></div>`}
+ if(e.t==='note'){const callT=x.call_id?(clwState.calls.find(k=>k.id===x.call_id)):null;return `<div class="clw-ev" style="--cc:#7a8fa6"><div class="clw-row"><span class="clw-av" style="background:${clwCol(x.author)}">${esc(clwIni(x.author))}</span><span class="clw-pill">Коментар · ${clwHM(e.d)}</span><span class="clw-mut">${esc(x.author||'')}${callT?' · до дзвінка '+clwHM(clwDate(callT.at)):''}</span></div><div class="clw-text">${esc(x.text).replace(/\n/g,'<br>')}</div></div>`}
+ const r=x,s=stage(r.stage);return `<div class="clw-ev clw-click" style="--cc:#00953b" data-clw-req="${r.id}"><div class="clw-row"><span class="clw-av" style="background:${clwCol(r.manager)}">${esc(clwIni(r.manager))}</span><span class="clw-pill">Заявка №${r.id}${r.category?' · '+esc(r.category):''}</span><span class="stage-pill" style="--sc:${s.color};margin-left:auto">${esc(r.stage||s.title||'')}</span></div><div class="clw-text">${has(r.amount)?`<b>${esc(fmt(r.amount,r.currency))}</b> · `:''}${esc([r.direction,r.brand].filter(Boolean).join(' · '))}${r.doc?' · '+esc(r.doc):''}</div></div>`}
+function clwPlayer(p){const a=new Audio();a.preload='none';let speed=1;const play=p.querySelector('.clw-play'),bar=p.querySelector('.clw-bar'),fill=bar.querySelector('i'),tm=p.querySelector('.clw-time'),sp=p.querySelector('.clw-speed');
+ play.onclick=()=>{if(!a.src)a.src=p.dataset.src;document.querySelectorAll('audio.clw-on').forEach(o=>{if(o!==a)o.pause()});if(a.paused){a.play().catch(()=>toast('Запис не відтворюється','Ringostat зберігає записи близько року'))}else a.pause()};
+ a.onplay=()=>{play.textContent='❚❚';a.classList.add('clw-on')};a.onpause=()=>{play.textContent='▶'};
+ a.ontimeupdate=()=>{const d=a.duration||0;fill.style.width=d?(a.currentTime/d*100)+'%':'0';tm.textContent=`${clwDur(a.currentTime)} / ${clwDur(d)}`};
+ bar.onclick=e=>{if(!a.duration)return;const r=bar.getBoundingClientRect();a.currentTime=(e.clientX-r.left)/r.width*a.duration};
+ sp.onclick=()=>{speed=speed===1?1.5:speed===1.5?2:1;a.playbackRate=speed;sp.textContent=speed+'×'};
+ a.onratechange=()=>{};a.addEventListener('loadedmetadata',()=>{a.playbackRate=speed})}
+async function clwPost(c,body){try{const r=await fetch('api/notes',{method:'POST',headers:API_H,body:JSON.stringify({edrpou:c.edrpou,...body})});const x=await r.json().catch(()=>({}));if(!r.ok){toast('Не вдалося зберегти',x.error||'Спробуйте ще раз');return}clwState.notes=x.notes||[];clwState.ctxCall='';clwRender(c);if(body.text)toast('Коментар додано',c.client||'')}catch(e){toast('Немає зв’язку із сервером CRM','Коментар не збережено')}}
+/* «+ Додати заявку» при відкритій задачі: вікна стають поруч, ЄДРПОУ підставляється з задачі */
+const _openRequestModalBase=openRequestModal;
+openRequestModal=function(){_openRequestModalBase();setTimeout(besideTask,0)};
+function besideTask(){const win=document.querySelector('#taskWin');if(!win)return;const form=win.querySelector('#taskForm');const code=String(form?.elements.edrpou?.value||'').trim();const m=document.querySelector('#modal');if(!m)return;if(innerWidth>=1300){const tw=win.getBoundingClientRect(),m0=/translate\((-?[\d.]+)px, *(-?[\d.]+)px\)/.exec(win.style.transform||''),cx=m0?+m0[1]:0,cy=m0?+m0[2]:0;win.style.transform=`translate(${cx+20-tw.left}px,${cy}px)`;const left=20+tw.width+16,cur=(innerWidth-m.offsetWidth)/2;m.style.transform=`translate(${Math.max(0,left-cur)}px,0px)`}const e=m.querySelector('#requestForm [name=edrpou]');if(e&&code&&!e.value){e.value=code;e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}))}}
+document.querySelector('#addRequestBtn').onclick=()=>openRequestModal();
+/* коли в спільному вікні вже не картка клієнта — повертаємо звичайну ширину */
+new MutationObserver(()=>{const m=document.querySelector('#modal');if(m&&!m.querySelector('.clw'))m.classList.remove('cl-wide')}).observe(document.querySelector('#modal'),{childList:true});
+/* ===== Обговорення заявки: чат поруч із заявкою (як «чат угоди» в Бітріксі) ===== */
+const CH_KEY='frendt_chat2_srv';
+const CH_STAFF=[['Володимир Гиренко','Адміністратор'],['Сергій Хамаза','Керівник відділу продажу'],['Олександр Перепелиця','Керівник технічного департаменту'],['Тетяна Хижняк','Бухгалтер'],['Інна Павлюк','Бухгалтер'],['Олена Нікітюк','Бухгалтер'],['Тетяна Корнійчук','Менеджер'],['Владислав Поліщук','Технічний департамент']];
+let CHAT={};let chMeLocal='';try{CHAT=JSON.parse(localStorage.getItem(CH_KEY)||'{}')||{};chMeLocal=localStorage.getItem(CH_KEY+'_me')||''}catch(e){CHAT={}}
+const chSave=()=>{try{localStorage.setItem(CH_KEY,JSON.stringify(CHAT))}catch(e){}};
+function chPeople(){const m=new Map(CH_STAFF);requests.forEach(r=>{const n=cl(r).manager;if(n&&!m.has(n))m.set(n,'Менеджер зі збуту')});(DICTS?.manager?.list||[]).forEach(n=>{if(n&&!m.has(n))m.set(n,'Менеджер зі збуту')});return [...m].map(([n,r])=>({n,r}))}
+const chRole=n=>chPeople().find(p=>p.n===n)?.r||'';
+const chMe=()=>me?me.name:(chMeLocal||'Сергій Хамаза');
+const chCol=n=>{let h=0;for(const ch of String(n||''))h=(h*31+ch.charCodeAt(0))>>>0;return ['#e8662a','#2f7fd1','#7a5af5','#00953b','#c2185b','#00838f','#8d6e63','#5c6bc0','#ef6c00'][h%9]};
+const chIni=n=>String(n||'?').split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
+const chAv=(n,s='')=>`<span class="ch-av ${s}" style="background:${chCol(n)}" title="${esc(n)}">${esc(chIni(n))}</span>`;
+const chPad=n=>String(n).padStart(2,'0');const chHM=t=>{const d=new Date(t);return chPad(d.getHours())+':'+chPad(d.getMinutes())};
+const CH_MON=['січня','лютого','березня','квітня','травня','червня','липня','серпня','вересня','жовтня','листопада','грудня'];
+const chDay=t=>{const d=new Date(t),n=new Date(),y=new Date(n);y.setDate(n.getDate()-1);if(d.toDateString()===n.toDateString())return 'Сьогодні';if(d.toDateString()===y.toDateString())return 'Вчора';return d.getDate()+' '+CH_MON[d.getMonth()]};
+const chId=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function chGet(id){if(!CHAT[id]){const r=requests.find(x=>x.id===id);const mgr=r?cl(r).manager:'';CHAT[id]={members:[mgr||chMe()].filter(Boolean),msgs:[],read:{}}}return CHAT[id]}
+/* демо у файлі без сервера: кілька обговорень, щоб було видно, як це виглядає */
+(function chDemo(){if(me||Object.keys(CHAT).length||!requests.length)return;const H=36e5,now=Date.now();const rs=requests.slice().sort((a,b)=>b.id-a.id).filter(r=>!/Закрито|відмов/i.test(r.stage)).slice(0,4);
+ const say=(c,ago,who,text,x={})=>c.msgs.push({id:chId(),t:now-ago*H,who,text,...x});
+ rs.forEach((r,i)=>{const c=chGet(r.id);const mgr=cl(r).manager||'Сергій Хамаза';c.members=[mgr,'Сергій Хамаза'];c.msgs.push({id:chId(),t:now-(28+i)*H,sys:`Створено обговорення заявки №${r.id}`,demo:1});
+  if(i===0){c.members.push('Тетяна Хижняк','Інна Павлюк');say(c,26,mgr,'@Тетяна Хижняк виставте, будь ласка, рахунок. Реквізити в картці клієнта.');say(c,25.5,'Тетяна Хижняк','Рахунок готовий, відправила клієнту на пошту.',{files:['Рахунок_'+(r.doc||'ФР')+'.pdf']});say(c,3,'Інна Павлюк','Оплата надійшла ✅',{reacts:{'👍':[mgr,'Сергій Хамаза']}});say(c,1,'Сергій Хамаза',`@${mgr} коли відвантаження?`);say(c,0.4,'Інна Павлюк','@Сергій Хамаза погодьте, будь ласка, відстрочку на решту суми — клієнт просить до кінця місяця.')}
+  if(i===1){c.members.push('Олександр Перепелиця');say(c,20,mgr,'@Олександр Перепелиця клієнт питає терміни поставки й монтажу.');say(c,19,'Олександр Перепелиця','Склад — 2 тижні після оплати, монтаж наступного тижня.')}
+  if(i===1)say(c,0.2,'Олександр Перепелиця','@Сергій Хамаза потрібне ваше рішення по знижці на монтаж.');
+  if(i===2){c.members.push('Владислав Поліщук');say(c,8,'Сергій Хамаза','@Владислав Поліщук візьми виїзд по цій заявці.');say(c,7,'Владислав Поліщук','Ок, буду в середу зранку.',{reacts:{'👍':['Сергій Хамаза']}})}
+  c.read={};});chSave()})();
+function chUnread(id){const c=CHAT[id];if(!c)return {n:0,m:false};const me_=chMe(),last=c.read[me_]||0;const m=c.msgs.filter(x=>!x.sys&&x.t>last&&x.who!==me_);return {n:m.length,m:m.some(x=>(x.text||'').includes('@'+me_))}}
+const chState={id:0,reply:null,files:[],tab:'tel'};
+const _openDrawerBase=openDrawer;
+openDrawer=function(id){_openDrawerBase(id);chAttach(id)};
+const _closeDrawerBase=closeDrawer;
+closeDrawer=function(){_closeDrawerBase();chState.id=0;document.querySelector('#drawer')?.classList.remove('with-chat')};
+function chAttach(id){const d=document.querySelector('#drawer'),dc=document.querySelector('#drawerContent');if(!d||!dc||!requests.find(x=>x.id===id))return;
+ d.classList.add('with-chat');if(chState.id!==id){chState.reply=null;chState.files=[]}chState.id=id;
+ if(!dc.querySelector('.dc-left')){const left=document.createElement('div');left.className='dc-left';[...dc.children].forEach(x=>left.appendChild(x));const right=document.createElement('div');right.className='dc-right';right.innerHTML='<div class="dc-tabs"><button type="button" data-dct="tel">☎ Телефонія</button><button type="button" data-dct="chat">💬 Чат <span class="dc-tbadge" id="dcChatBadge"></span></button></div><div class="dc-pane" id="dcTel"></div><div class="dc-chat dc-pane" id="dcChat"></div>';dc.append(left,right);right.querySelectorAll('[data-dct]').forEach(b=>b.onclick=()=>{chState.tab=b.dataset.dct;dcTabs()})}
+ chState.tab='tel';dcTabs();chRender();telRender(id);if(me)chLoad(id)}
+/* праворуч дві вкладки: «Телефонія» (відкривається сама) і «Чат» */
+function dcTabs(){const t=chState.tab;document.querySelectorAll('.dc-tabs [data-dct]').forEach(b=>b.classList.toggle('on',b.dataset.dct===t));const tel=document.querySelector('#dcTel'),ch=document.querySelector('#dcChat');if(tel)tel.hidden=t!=='tel';if(ch)ch.hidden=t!=='chat';if(t==='chat'){const ms=document.querySelector('#chMsgs');if(ms)ms.scrollTop=ms.scrollHeight;if(chState.id&&chUnread(chState.id).n)chAct(chState.id,{type:'read'}).then(()=>{refreshChatBadges();dcChatBadge()})}dcChatBadge()}
+function dcChatBadge(){const b=document.querySelector('#dcChatBadge');if(!b||!chState.id)return;const c=CHAT[chState.id],u=chUnread(chState.id),n=c?c.msgs.filter(m=>!m.sys).length:0;b.className='dc-tbadge'+(u.n?' new':'')+(u.m?' at':'');b.textContent=u.n?(u.m?'@':'')+u.n:(n||'')}
+const telTel=p=>{const d=String(p||'').replace(/\D/g,'');return d?(d.length===10&&d[0]==='0'?'+38'+d:'+'+d):''};
+const telDur=s=>{s=Math.max(0,Math.round(+s||0));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+async function telRender(id){const box=document.querySelector('#dcTel');const r=requests.find(x=>x.id===id);if(!box||!r)return;const c=cl(r);
+ const phones=[[c.contact||'Контакт',c.phone1],['Телефон 2',c.phone2]].filter(x=>x[1]);
+ const head=`<div class="tel-head"><h3>Дзвінки клієнта</h3><p>${esc(c.client||'')}${c.edrpou?' · '+esc(c.edrpou):''}</p></div><div class="tel-phones">${phones.map(([n,p])=>`<a class="tel-ph" href="tel:${esc(telTel(p))}"><span>☎</span><b>${esc(p)}</b><small>${esc(n)}</small></a>`).join('')||'<div class="tel-empty">У картці клієнта немає телефону</div>'}</div>`;
+ const soon=`<div class="tel-soon"><div class="tel-ic">☎</div><b>Телефонія Ringostat підключається</b><p>Тут автоматично з’являться всі розмови з цим клієнтом: вхідні, вихідні й пропущені, із записами, плеєром і менеджером, який говорив.</p></div>`;
+ box.innerHTML=head+(me?'<div class="tel-empty">Завантажую дзвінки…</div>':soon);if(!me)return;
+ try{const res=await fetch('api/calls?edrpou='+encodeURIComponent(c.edrpou||r.edrpou),{headers:API_H,cache:'no-store'});if(chState.id!==id)return;if(!res.ok){box.innerHTML=head+soon;return}const x=await res.json();if(x.configured===false&&!(x.calls||[]).length){box.innerHTML=head+soon;return}
+  const calls=x.calls||[];const mins=Math.round(calls.reduce((s,k)=>s+(+k.billsec||0),0)/60),missed=calls.filter(k=>k.missed).length;
+  box.innerHTML=head+`<div class="tel-kpis"><div><b>${calls.length}</b><span>дзвінків · ${mins} хв</span></div><div><b class="${missed?'red':''}">${missed}</b><span>пропущені</span></div></div><div class="tel-list">${calls.map(k=>{const cc=k.missed?'#c62828':k.dir==='out'?'#00953b':'#2f7fd1',lbl=k.missed?'Пропущений':k.dir==='out'?'Вихідний':'Вхідний';return `<div class="tel-call" style="--cc:${cc}"><div class="tel-row"><span class="tel-pill">${lbl} · ${esc(String(k.at).slice(8,10)+'.'+String(k.at).slice(5,7)+' '+String(k.at).slice(11,16))}</span><span class="tel-mut">${k.missed?'':telDur(k.billsec)}</span><span class="tel-mut tel-emp">${esc(k.employee||'')}</span></div>${k.rec?`<audio controls preload="none" src="api/calls/${encodeURIComponent(k.id)}/audio"></audio>`:''}</div>`}).join('')||'<div class="tel-empty">Дзвінків з цим клієнтом ще не було</div>'}</div>`}catch(e){box.innerHTML=head+soon}}
+async function chLoad(id){try{const r=await fetch('api/chat?req='+id,{headers:API_H,cache:'no-store'});if(!r.ok)return;const x=await r.json();if(x.chat)CHAT[id]=x.chat;if(chState.id===id){chRender();dcChatBadge()}}catch(e){}}
+/* на сервері: усі обговорення підтягуються кожні 5 с — бейджі, сповіщення, нові повідомлення у відкритому чаті */
+let chSig='';async function chSync(){if(!me)return;try{const r=await fetch('api/chat/all',{headers:API_H,cache:'no-store'});if(!r.ok)return;const x=await r.json();const sig=JSON.stringify(x.chats).length+':'+Object.values(x.chats).reduce((n,c)=>n+c.msgs.length,0)+':'+Object.values(x.chats).map(c=>JSON.stringify(c.read)+c.pinned).join('');CHAT=x.chats||{};if(sig!==chSig){chSig=sig;if(chState.id&&document.querySelector('#drawer.show'))chRender();refreshChatBadges();dcChatBadge()}notifCheck()}catch(e){}}
+setInterval(chSync,5000);setTimeout(chSync,1200);
+document.querySelector('#drawerBackdrop').onclick=()=>closeDrawer();
+async function chAct(id,body){const c=chGet(id);if(me){if(body.type==='msg')body.mentions=chPeople().map(p=>p.n).filter(n=>(body.text||'').includes('@'+n));try{const r=await fetch('api/chat',{method:'POST',headers:API_H,body:JSON.stringify({req:id,...body})});const x=await r.json().catch(()=>({}));if(!r.ok){toast('Не вдалося',x.error||'Спробуйте ще раз');return false}CHAT[id]=x.chat;return true}catch(e){toast('Немає зв’язку із сервером CRM','Повідомлення не надіслано');return false}}
+ const who=chMe(),t=Date.now();
+ if(body.type==='msg'){c.msgs.push({id:chId(),t,who,text:body.text||'',files:body.files||[],reply:body.reply||null});chPeople().forEach(p=>{if((body.text||'').includes('@'+p.n)&&!c.members.includes(p.n)){c.members.push(p.n);c.msgs.push({id:chId(),t:t+1,sys:`${p.n} доданий(а) до обговорення через згадку`})}})}
+ if(body.type==='join'&&!c.members.includes(who)){c.members.push(who);c.msgs.push({id:chId(),t,sys:`${who} приєднався(лась) до обговорення`})}
+ if(body.type==='add'&&!c.members.includes(body.name)){c.members.push(body.name);c.msgs.push({id:chId(),t,sys:`${who} додав(ла) ${body.name}`})}
+ if(body.type==='remove'){c.members=c.members.filter(x=>x!==body.name);c.msgs.push({id:chId(),t,sys:`${who} прибрав(ла) ${body.name}`})}
+ if(body.type==='react'){const m=c.msgs.find(x=>x.id===body.msg);if(m){m.reacts=m.reacts||{};const a=m.reacts[body.emoji]=m.reacts[body.emoji]||[];const i=a.indexOf(who);i>=0?a.splice(i,1):a.push(who)}}
+ if(body.type==='read')c.read[who]=t;
+ if(body.type==='pin'){const was=c.pinned===body.msg;c.pinned=was?null:body.msg;c.msgs.push({id:chId(),t,sys:`${who} ${was?'відкріпив(ла)':'закріпив(ла)'} повідомлення`})}
+ chSave();return true}
+function chText(t){let h=esc(t);const me_=chMe();chPeople().forEach(p=>{h=h.split('@'+esc(p.n)).join(`<span class="ch-men${p.n===me_?' me':''}">@${esc(p.n)}</span>`)});return h}
+function chRender(){const box=document.querySelector('#dcChat');const id=chState.id;if(!box||!id)return;const keep=box.querySelector('#chTa');const keepV=keep?keep.value:'',keepF=keep&&document.activeElement===keep,keepS=box.querySelector('#chMsgs');const atBottom=!keepS||keepS.scrollHeight-keepS.scrollTop-keepS.clientHeight<60,prevTop=keepS?keepS.scrollTop:0;const c=chGet(id),me_=chMe(),member=c.members.includes(me_);const r=requests.find(x=>x.id===id);
+ let html='',lastDay='',prev=null;
+ c.msgs.forEach(m=>{const dl=chDay(m.t);if(dl!==lastDay){html+=`<div class="ch-day">${dl}</div>`;lastDay=dl;prev=null}
+  if(m.sys){html+=`<div class="ch-sys">${esc(m.sys)} · ${chHM(m.t)}</div>`;prev=null;return}
+  const cont=prev&&prev.who===m.who&&m.t-prev.t<6e5,mine=m.who===me_,q=m.reply?c.msgs.find(x=>x.id===m.reply):null;
+  html+=`<div class="ch-m${mine?' mine':''}${cont?' cont':''}" data-mid="${m.id}">${chAv(m.who,'s')}<div class="ch-bub">${!cont&&!mine?`<div class="ch-who" style="color:${chCol(m.who)}">${esc(m.who)} <span>· ${esc(chRole(m.who))}</span></div>`:''}${q?`<div class="ch-q"><b>${esc(q.who||'')}</b>${esc((q.text||'').slice(0,90))}</div>`:''}${m.text?`<div class="ch-txt">${chText(m.text)}</div>`:''}${(m.files||[]).map(f=>`<div class="ch-file">📎 ${esc(f)}</div>`).join('')}${m.reacts&&Object.values(m.reacts).some(v=>v.length)?`<div class="ch-reacts">${Object.entries(m.reacts).filter(([,v])=>v.length).map(([k,v])=>`<button class="${v.includes(me_)?'on':''}" data-chr="${m.id}|${k}" title="${esc(v.join(', '))}">${k} ${v.length}</button>`).join('')}</div>`:''}<div class="ch-meta">${chHM(m.t)}${mine?' ✓✓':''}</div><div class="ch-tools"><button data-chr="${m.id}|👍" title="Подобається">👍</button><button data-chr="${m.id}|✅" title="Зроблено">✅</button><button data-chq="${m.id}" title="Відповісти">↩</button><button data-chpin="${m.id}" title="${c.pinned===m.id?'Відкріпити':'Закріпити зверху'}">📌</button><button data-chtask="${m.id}" title="Зробити задачею">📋</button></div></div></div>`;prev=m});
+ const myLast=[...c.msgs].reverse().find(m=>!m.sys&&m.who===me_);const seenBy=myLast?Object.entries(c.read||{}).filter(([n,t])=>n!==me_&&t>=myLast.t).map(([n])=>n):[];
+ if(myLast&&seenBy.length)html+=`<div class="ch-seen">Прочитали: ${seenBy.slice(0,6).map(n=>chAv(n,'xs')).join('')} <span>${esc(seenBy.length===1?seenBy[0]:seenBy.length+' учасн.')}</span></div>`;
+ const pin=c.pinned?c.msgs.find(x=>x.id===c.pinned):null;
+ const q=chState.reply?c.msgs.find(x=>x.id===chState.reply):null;
+ box.innerHTML=`<div class="ch-head"><div><h3>Обговорення заявки</h3><p>${c.members.length} учасн.${me?'':` · <label>я: <select id="chMeSel">${chPeople().map(p=>`<option${p.n===me_?' selected':''}>${esc(p.n)}</option>`).join('')}</select></label>`}</p></div><div class="ch-stack">${c.members.slice(0,6).map(n=>chAv(n,'s')).join('')}</div><button type="button" class="ch-addm" id="chAddM" title="Учасники">+ учасник</button></div>
+ <div class="ch-people" id="chPeople" hidden>${c.members.map(n=>`<span class="ch-chip">${chAv(n,'xs')}${esc(n)}${n!==(r?cl(r).manager:'')?`<button data-chrm="${esc(n)}" title="Прибрати">×</button>`:''}</span>`).join('')}<select id="chAddSel"><option value="">+ додати колегу…</option>${chPeople().filter(p=>!c.members.includes(p.n)).map(p=>`<option>${esc(p.n)}</option>`).join('')}</select></div>
+ ${pin?`<div class="ch-pin" data-chgo="${pin.id}"><span>📌</span><div><b>Закріплено · ${esc(pin.who)}</b><div>${esc((pin.text||(pin.files||[]).join(', ')).slice(0,140))}</div></div><button type="button" data-chpin="${pin.id}" title="Відкріпити">×</button></div>`:''}
+ <div class="ch-msgs" id="chMsgs">${html||'<div class="ch-empty">Тут поки тихо. Напишіть перше повідомлення — колеги побачать його біля заявки.</div>'}${!me&&c.msgs.some(m=>m.demo)?'<div class="ch-sys" style="opacity:.8">Демо-повідомлення для перегляду</div>':''}</div>
+ ${member?`<div class="ch-comp">${q?`<div class="ch-replybar">↩ <b>${esc(q.who)}</b>: ${esc((q.text||'').slice(0,60))}<button id="chRx">×</button></div>`:''}${chState.files.length?`<div class="ch-files">${chState.files.map((f,i)=>`<span class="ch-file">📎 ${esc(f)} <button data-chfx="${i}">×</button></span>`).join('')}</div>`:''}<div class="ch-quick">${CH_QUICK.map((q,i)=>`<button type="button" data-chqk="${i}">${esc(q)}</button>`).join('')}</div><div class="ch-pop" id="chPop"></div><div class="ch-emo" id="chEmo" hidden>${CH_EMO.map(e=>`<button type="button" data-che="${e}">${e}</button>`).join('')}</div><div class="ch-row"><label class="ch-ico" title="Прикріпити файл">📎<input type="file" id="chFile" multiple hidden></label><button type="button" class="ch-ico" id="chEmoBtn" title="Емодзі">😊</button><textarea id="chTa" rows="1" placeholder="Повідомлення… @ — покликати колегу"></textarea><button type="button" class="ch-send" id="chSend" aria-label="Надіслати">➤</button></div></div>`
+ :`<div class="ch-join">👀 Ви бачите обговорення, але не берете участі<button type="button" id="chJoin">Приєднатися</button></div>`}`;
+ const ms=box.querySelector('#chMsgs');ms.scrollTop=atBottom?ms.scrollHeight:prevTop;{const t2=box.querySelector('#chTa');if(t2&&keepV){t2.value=keepV;t2.style.height=Math.min(140,t2.scrollHeight)+'px'}if(t2&&keepF)t2.focus()}
+ if(chState.tab==='chat'&&chUnread(id).n)chAct(id,{type:'read'}).then(()=>{refreshChatBadges();dcChatBadge()});dcChatBadge();
+ const sel=box.querySelector('#chMeSel');if(sel)sel.onchange=()=>{chMeLocal=sel.value;try{localStorage.setItem(CH_KEY+'_me',chMeLocal)}catch(e){}chRender();refreshChatBadges()};
+ box.querySelector('#chAddM').onclick=()=>{const p=box.querySelector('#chPeople');p.hidden=!p.hidden};
+ box.querySelector('#chAddSel').onchange=async e=>{if(e.target.value&&await chAct(id,{type:'add',name:e.target.value}))chRender()};
+ box.querySelectorAll('[data-chrm]').forEach(b=>b.onclick=async()=>{if(await chAct(id,{type:'remove',name:b.dataset.chrm}))chRender()});
+ box.querySelectorAll('[data-chr]').forEach(b=>b.onclick=async()=>{const [m,e]=b.dataset.chr.split('|');if(await chAct(id,{type:'react',msg:m,emoji:e}))chRender()});
+ box.querySelectorAll('[data-chpin]').forEach(b=>b.onclick=async e=>{e.stopPropagation();if(await chAct(id,{type:'pin',msg:b.dataset.chpin}))chRender()});
+ box.querySelectorAll('[data-chgo]').forEach(b=>b.onclick=()=>{const el=box.querySelector(`[data-mid="${b.dataset.chgo}"]`);if(el){el.scrollIntoView({block:'center',behavior:'smooth'});el.classList.add('ch-flash');setTimeout(()=>el.classList.remove('ch-flash'),1600)}});
+ box.querySelectorAll('[data-chtask]').forEach(b=>b.onclick=()=>chToTask(id,b.dataset.chtask));
+ box.querySelectorAll('[data-chq]').forEach(b=>b.onclick=()=>{if(!member){toast('Спершу приєднайтеся до обговорення','');return}chState.reply=b.dataset.chq;chRender();box.querySelector('#chTa')?.focus()});
+ const j=box.querySelector('#chJoin');if(j)j.onclick=async()=>{if(await chAct(id,{type:'join'}))chRender()};
+ if(!member)return;
+ const ta=box.querySelector('#chTa'),pop=box.querySelector('#chPop');let pi=0,pl=[];
+ const rx=box.querySelector('#chRx');if(rx)rx.onclick=()=>{chState.reply=null;chRender()};
+ box.querySelectorAll('[data-chfx]').forEach(b=>b.onclick=()=>{chState.files.splice(+b.dataset.chfx,1);chRender()});
+ box.querySelector('#chFile').onchange=e=>{chState.files.push(...[...e.target.files].map(f=>f.name));chRender()};
+ const ins=t=>{const a=ta.selectionStart,b2=ta.selectionEnd;ta.value=ta.value.slice(0,a)+t+ta.value.slice(b2);ta.selectionStart=ta.selectionEnd=a+t.length;ta.focus();ta.dispatchEvent(new Event('input'))};
+ const emo=box.querySelector('#chEmo');box.querySelector('#chEmoBtn').onclick=()=>{emo.hidden=!emo.hidden};
+ box.querySelectorAll('[data-che]').forEach(b=>b.onclick=()=>{ins(b.dataset.che);emo.hidden=true});
+ box.querySelectorAll('[data-chqk]').forEach(b=>b.onclick=()=>{ins((ta.value&&!/\s$/.test(ta.value)?' ':'')+CH_QUICK[+b.dataset.chqk])});
+ const pane=box;pane.ondragover=e=>{if([...e.dataTransfer.types].includes('Files')){e.preventDefault();pane.classList.add('ch-drop')}};pane.ondragleave=e=>{if(e.target===pane||!pane.contains(e.relatedTarget))pane.classList.remove('ch-drop')};
+ pane.ondrop=e=>{e.preventDefault();pane.classList.remove('ch-drop');const fs=[...(e.dataTransfer.files||[])].map(f=>f.name);if(fs.length){chState.files.push(...fs);chRender()}};
+ const showPop=()=>{const m=/@([^@\n]{0,25})$/.exec(ta.value.slice(0,ta.selectionStart));if(!m){pop.style.display='none';return}const s=m[1].toLowerCase();pl=chPeople().filter(p=>p.n!==me_&&p.n.toLowerCase().includes(s)).slice(0,8);if(!pl.length){pop.style.display='none';return}pi=Math.min(pi,pl.length-1);pop.innerHTML=pl.map((p,i)=>`<div class="${i===pi?'on':''}" data-pi="${i}">${chAv(p.n,'s')}<span>${esc(p.n)}<small>${esc(p.r)}${c.members.includes(p.n)?'':' · додасться в чат'}</small></span></div>`).join('');pop.style.display='block';pop.querySelectorAll('[data-pi]').forEach(d=>d.onmousedown=e=>{e.preventDefault();pick(+d.dataset.pi)})};
+ const pick=i=>{const p=pl[i];const pos=ta.selectionStart;const before=ta.value.slice(0,pos).replace(/@([^@\n]{0,25})$/,'@'+p.n+' ');ta.value=before+ta.value.slice(pos);ta.selectionStart=ta.selectionEnd=before.length;pop.style.display='none';ta.focus()};
+ ta.oninput=()=>{ta.style.height='auto';ta.style.height=Math.min(140,ta.scrollHeight)+'px';pi=0;showPop()};
+ ta.onkeydown=e=>{if(pop.style.display==='block'){if(e.key==='ArrowDown'){pi=(pi+1)%pl.length;showPop();e.preventDefault();return}if(e.key==='ArrowUp'){pi=(pi-1+pl.length)%pl.length;showPop();e.preventDefault();return}if(e.key==='Enter'||e.key==='Tab'){pick(pi);e.preventDefault();return}if(e.key==='Escape'){pop.style.display='none';return}}if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}};
+ box.querySelector('#chSend').onclick=send;
+ async function send(){const t=ta.value.trim();if(!t&&!chState.files.length){ta.focus();return}const ok=await chAct(id,{type:'msg',text:t,files:chState.files.slice(),reply:chState.reply});if(!ok)return;chState.reply=null;chState.files=[];ta.value='';chRender();refreshChatBadges();dcChatBadge();box.querySelector('#chTa')?.focus()}}
+/* сповіщення як у Telegram: коли вас згадали (@) — картка справа знизу висить, поки не закриєте × або не відкриєте */
+const NT_KEY=CH_KEY+'_seen';let ntSeen={};try{ntSeen=JSON.parse(localStorage.getItem(NT_KEY)||'{}')||{}}catch(e){}
+const ntSave=()=>{try{localStorage.setItem(NT_KEY,JSON.stringify(ntSeen))}catch(e){}};
+function ntList(){const me_=chMe(),seen=new Set(ntSeen[me_]||[]),out=[];for(const [id,c] of Object.entries(CHAT)){const last=c.read?.[me_]||0;for(const m of c.msgs||[]){if(m.sys||m.who===me_||!(m.text||'').includes('@'+me_)||m.t<=last||seen.has(m.id))continue;out.push({req:+id,m})}}return out.sort((a,b)=>b.m.t-a.m.t)}
+function ntDismiss(ids){const me_=chMe();ntSeen[me_]=[...new Set([...(ntSeen[me_]||[]),...ids])].slice(-500);ntSave()}
+function ntAgo(t){const s=Math.round((Date.now()-t)/1000);if(s<60)return 'щойно';if(s<3600)return Math.floor(s/60)+' хв тому';if(s<86400)return Math.floor(s/3600)+' год тому';return chHM(t)+' · '+new Date(t).toLocaleDateString('uk-UA')}
+function notifCheck(){bellRender();let box=document.querySelector('#chNotifs');if(!box){box=document.createElement('div');box.id='chNotifs';document.body.appendChild(box)}
+ const L=ntList();const shown=L.slice(0,4);
+ box.innerHTML=shown.map(({req,m})=>{const r=requests.find(x=>x.id===req);const cli=r?cl(r).client:'';return `<div class="nt" data-nt="${esc(m.id)}" data-nreq="${req}" role="button" tabindex="0"><button type="button" class="nt-x" data-ntx="${esc(m.id)}" aria-label="Закрити">×</button>${chAv(m.who)}<div class="nt-b"><div class="nt-top"><b>${esc(m.who)}</b><span>згадав(ла) вас · ${ntAgo(m.t)}</span></div><div class="nt-req">Заявка №${req}${cli?' · '+esc(cli):''}</div><div class="nt-txt">${chText(m.text)}</div><div class="nt-go">Відкрити обговорення →</div></div></div>`}).join('')+(L.length>4?`<div class="nt-more">ще ${L.length-4} згадок <button type="button" id="ntAll">закрити всі</button></div>`:'');
+ box.querySelectorAll('[data-ntx]').forEach(b=>b.onclick=e=>{e.stopPropagation();ntDismiss([b.dataset.ntx]);notifCheck()});
+ box.querySelectorAll('[data-nt]').forEach(n=>n.onclick=()=>{const id=+n.dataset.nreq;ntDismiss(ntList().filter(x=>x.req===id).map(x=>x.m.id));openDrawer(id);chState.tab='chat';dcTabs();notifCheck()});
+ const all=box.querySelector('#ntAll');if(all)all.onclick=()=>{ntDismiss(L.map(x=>x.m.id));notifCheck()}}
+setInterval(()=>notifCheck(),5000);setTimeout(()=>notifCheck(),800);
+const CH_QUICK=['Виставте рахунок, будь ласка','Оплата надійшла ✅','Коли відвантаження?','Потрібен виїзд техніка','Погодьте, будь ласка','Зроблено 👍'];
+const CH_EMO=['👍','✅','🔥','🙏','👌','😊','😂','😮','🤝','💰','🚜','🌾','📦','📞','⏰','❗','❓','🎉'];
+/* «📋 Зробити задачею»: з повідомлення — у «Задачі менеджерів» з клієнтом заявки */
+function chToTask(id,mid){const c=CHAT[id],m=c?.msgs.find(x=>x.id===mid),r=requests.find(x=>x.id===id);if(!m||!r||typeof openTask!=='function')return;const k=cl(r);openTask(0);const f=document.querySelector('#taskForm');if(!f)return;
+ const tm=new Date(Date.now()+864e5),iso=`${tm.getFullYear()}-${String(tm.getMonth()+1).padStart(2,'0')}-${String(tm.getDate()).padStart(2,'0')}`;
+ const set=(n,v)=>{const e=f.elements[n];if(e&&v&&!e.disabled){e.value=v;e.dispatchEvent(new Event('input',{bubbles:true}))}};
+ set('edrpou',k.edrpou||r.edrpou);set('company',k.client);set('region',k.region);set('district',k.district);set('lpr',k.contact);set('phone',k.phone1);set('email',k.email);
+ let tt=m.text||'Задача з чату';chPeople().forEach(p=>{tt=tt.split('@'+p.n).join('')});set('task',tt.replace(/\s+/g,' ').trim().slice(0,120)||'Задача з чату');set('c1',`З чату заявки №${id} · ${m.who}: ${m.text||''}`.slice(0,900));set('callDate',iso);toast('Задачу заповнено з повідомлення','Перевірте й натисніть «Зберегти»')}
+/* дзвіночок у шапці: лічильник згадок і історія */
+function bellRender(){const b=document.querySelector('#notifyBtn');if(!b)return;const n=ntList().length;let bd=b.querySelector('.bell-n');if(!bd){bd=document.createElement('span');bd.className='bell-n';b.appendChild(bd)}bd.textContent=n?String(n):'';bd.hidden=!n}
+function bellHistory(){const me_=chMe(),all=[];for(const [id,c] of Object.entries(CHAT))for(const m of c.msgs||[])if(!m.sys&&m.who!==me_&&(m.text||'').includes('@'+me_))all.push({req:+id,m});all.sort((a,b)=>b.m.t-a.m.t);
+ let p=document.querySelector('#bellPanel');if(p){p.remove();return}p=document.createElement('div');p.id='bellPanel';
+ p.innerHTML=`<div class="bp-h">Згадки про вас <button type="button" id="bpX">×</button></div>${all.slice(0,30).map(({req,m})=>{const r=requests.find(x=>x.id===req),act=ntList().some(x=>x.m.id===m.id);return `<div class="bp-i${act?' new':''}" data-bpr="${req}">${chAv(m.who,'s')}<div><b>${esc(m.who)}</b> <small>${ntAgo(m.t)}</small><div class="bp-r">№${req}${r?' · '+esc(cl(r).client||''):''}</div><div class="bp-t">${esc((m.text||'').slice(0,110))}</div></div></div>`}).join('')||'<div class="bp-e">Вас ще ніхто не згадував</div>'}`;
+ document.body.appendChild(p);p.querySelector('#bpX').onclick=()=>p.remove();p.querySelectorAll('[data-bpr]').forEach(e=>e.onclick=()=>{const id=+e.dataset.bpr;p.remove();ntDismiss(ntList().filter(x=>x.req===id).map(x=>x.m.id));openDrawer(id);chState.tab='chat';dcTabs();notifCheck()})}
+document.querySelector('#notifyBtn').onclick=e=>{e.stopPropagation();bellHistory()};
+document.addEventListener('click',e=>{const p=document.querySelector('#bellPanel');if(p&&!p.contains(e.target))p.remove()});
+/* значок обговорення на картках канбану */
+function refreshChatBadges(){setTimeout(notifCheck,0);document.querySelectorAll('.board .card[data-id]').forEach(card=>{const id=+card.dataset.id,c=CHAT[id];card.querySelector('.ch-badge')?.remove();if(!c||!c.msgs.some(m=>!m.sys))return;const u=chUnread(id);const n=c.msgs.filter(m=>!m.sys).length;const top=card.querySelector('.card-top');if(!top)return;top.insertAdjacentHTML('beforeend',`<span class="ch-badge${u.n?' new':''}${u.m?' at':''}" title="${u.n?u.n+' нових повідомлень':'Обговорення: '+n}">💬 ${u.n?(u.m?'@':'')+u.n:n}</span>`)})}
 
 </script>
 </body>
