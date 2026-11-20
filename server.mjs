@@ -7,7 +7,6 @@
 import { createServer } from 'node:http';
 import { readFile, writeFile, mkdir, readdir, rm, copyFile } from 'node:fs/promises';
 import { existsSync, readFileSync } from 'node:fs';
-import { gzipSync, gunzipSync } from 'node:zlib';
 import { join, dirname } from 'node:path';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -55,11 +54,6 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS sessions (token TEXT PRIMARY KEY, login TEXT NOT NULL, expires INTEGER NOT NULL);
   INSERT OR IGNORE INTO meta (k, v) VALUES ('rev', '0');
 `);
-db.exec(`CREATE TABLE IF NOT EXISTS deletions (kind TEXT NOT NULL, key TEXT NOT NULL, rev INTEGER NOT NULL);
-  CREATE INDEX IF NOT EXISTS deletions_rev ON deletions(rev);
-  CREATE INDEX IF NOT EXISTS requests_rev ON requests(rev);
-  CREATE INDEX IF NOT EXISTS clients_rev ON clients(rev);
-  INSERT OR IGNORE INTO meta (k, v) SELECT 'delta_since', v FROM meta WHERE k = 'rev';`);
 const q = {
   rev: db.prepare(`SELECT CAST(v AS INTEGER) AS v FROM meta WHERE k='rev'`),
   bump: db.prepare(`UPDATE meta SET v = CAST(v AS INTEGER) + 1 WHERE k='rev'`),
@@ -77,7 +71,7 @@ const q = {
 };
 const rev = () => q.rev.get().v;
 const now = () => new Date().toISOString();
-function tx(fn) { db.exec('BEGIN IMMEDIATE'); try { const r = fn(); db.exec('COMMIT'); return r; } catch (e) { try { db.exec('ROLLBACK'); } catch {} throw e; } }
+function tx(fn) { db.exec('BEGIN IMMEDIATE'); try { const r = fn(); db.exec('COMMIT'); return r; } catch (e) { db.exec('ROLLBACK'); throw e; } }
 
 // ---------- Задачі менеджерів (окрема таблиця; заявки й клієнти не змінюються) ----------
 const TASKS_FILE = join(here, 'tasks.json');
@@ -184,55 +178,6 @@ const SEED_FILE = join(here, 'seed.json');
   console.log(`Завантажено з таблиці: ${seed.requests.length} заявок, ${seed.clients.length} клієнтів`);
 })();
 
-// ---------- Разове додавання нових клієнтів з Bitrix (таблиця від 20.11.2026) ----------
-// Змінює ЛИШЕ таблицю clients («База клієнтів»). Наявні на сайті ЄДРПОУ не оновлюються:
-// дані сайту мають пріоритет, а з Bitrix додаються виключно нові клієнти.
-(function importBitrixClientsOnce() {
-  const KEY = 'clients_bitrix_20261120';
-  if (db.prepare('SELECT v FROM meta WHERE k = ?').get(KEY)) return;
-  const FILE = join(here, 'clients_bitrix.json.gz');
-  if (!existsSync(FILE)) return;
-  const recs = JSON.parse(gunzipSync(readFileSync(FILE)).toString('utf8'));
-  if (!Array.isArray(recs) || !recs.length) return;
-  const norm = (e) => String(e || '').replace(/[^\d,]/g, '').split(',').map(x => x.replace(/^0+/, '')).filter(Boolean).join(',');
-  let added = 0, skippedExisting = 0, skippedInvalid = 0;
-  q.bump.run(); const r = rev(); const t = now();
-  const byNorm = new Map();
-  for (const row of db.prepare('SELECT edrpou FROM clients').all()) { const n = norm(row.edrpou); if (n && !byNorm.has(n)) byNorm.set(n, row.edrpou); }
-  const pending = [];
-  for (const b of recs) {
-    const n = norm(b.edrpou); if (!n) { skippedInvalid++; continue; }
-    if (byNorm.has(n)) { skippedExisting++; continue; }
-    const rec = { ...b, edrpou: String(b.edrpou).trim() };
-    pending.push([n, rec]); byNorm.set(n, rec.edrpou);
-  }
-  // Невеликі транзакції не роздувають WAL на диску Render. Якщо запуск обірветься,
-  // наступний старт пропустить уже додане й безпечно продовжить з решти.
-  for (let i = 0; i < pending.length; i += 500) tx(() => {
-    for (const [, rec] of pending.slice(i, i + 500)) { q.upCli.run(rec.edrpou, JSON.stringify(rec), t, r); added++; }
-  });
-  tx(() => {
-    q.hist.run(t, 'import', KEY, JSON.stringify({ added, skippedExisting, skippedInvalid }));
-    db.prepare('INSERT OR REPLACE INTO meta (k, v) VALUES (?, ?)').run(KEY, t);
-  });
-  console.log(`Клієнти з Bitrix: додано ${added}, пропущено наявних ${skippedExisting}, некоректних ${skippedInvalid}, усього ${q.count.get().c}`);
-})();
-
-// Лише зміни після ревізії since (для тих, хто вже має базу в браузері)
-function delta(since) {
-  const d = q.getDicts.get();
-  const dels = db.prepare('SELECT kind, key FROM deletions WHERE rev > ?').all(since);
-  return {
-    rev: rev(), delta: true,
-    requests: db.prepare('SELECT data FROM requests WHERE rev > ?').all(since).map(x => JSON.parse(x.data)),
-    clients: db.prepare('SELECT data FROM clients WHERE rev > ?').all(since).map(x => JSON.parse(x.data)),
-    deleted: { requests: dels.filter(x => x.kind === 'request').map(x => Number(x.key)), clients: dels.filter(x => x.kind === 'client').map(x => x.key) },
-    dicts: d ? JSON.parse(d.data) : null,
-    updated: now()
-  };
-}
-let stateCache = { rev: -1, json: '' };
-const stateJson = () => { const r = rev(); if (stateCache.rev !== r) stateCache = { rev: r, json: JSON.stringify(state()) }; return stateCache.json; };
 function state() {
   const d = q.getDicts.get();
   const { r, c } = q.count.get();
@@ -302,8 +247,8 @@ function sync(body, who = '') {
     if (body.dicts && typeof body.dicts === 'object') { const s = JSON.stringify(body.dicts); q.upDicts.run(s, t); q.hist.run(t, 'dicts', 'custom', s); }
     // Видалення (лише з режиму адміністратора в CRM); старий вміст лишається в історії
     const del = body.deleted || {};
-    for (const id of Array.isArray(del.requests) ? del.requests : []) { db.prepare('DELETE FROM requests WHERE id = ?').run(Number(id)); q.hist.run(t, 'request-deleted' + (who ? ':' + who : ''), String(id), '{}'); db.prepare('INSERT INTO deletions (kind, key, rev) VALUES (?, ?, ?)').run('request', String(Number(id)), r); }
-    for (const k of Array.isArray(del.clients) ? del.clients : []) { db.prepare('DELETE FROM clients WHERE edrpou = ?').run(String(k)); q.hist.run(t, 'client-deleted' + (who ? ':' + who : ''), String(k), '{}'); db.prepare('INSERT INTO deletions (kind, key, rev) VALUES (?, ?, ?)').run('client', String(k), r); }
+    for (const id of Array.isArray(del.requests) ? del.requests : []) { db.prepare('DELETE FROM requests WHERE id = ?').run(Number(id)); q.hist.run(t, 'request-deleted' + (who ? ':' + who : ''), String(id), '{}'); }
+    for (const k of Array.isArray(del.clients) ? del.clients : []) { db.prepare('DELETE FROM clients WHERE edrpou = ?').run(String(k)); q.hist.run(t, 'client-deleted' + (who ? ':' + who : ''), String(k), '{}'); }
     return r;
   });
 }
@@ -395,7 +340,7 @@ const fail = (req) => { const k = ipOf(req); tries.set(k, [...(tries.get(k) || [
 const publicUser = (u) => u && ({ login: u.login, name: u.name, role: u.role });
 
 // ---------- HTTP ----------
-const send = (res, code, body, type = 'application/json; charset=utf-8', extra = {}) => { let out = typeof body === 'string' ? body : JSON.stringify(body); if (out.length > 2048 && /\bgzip\b/.test(res.req?.headers?.['accept-encoding'] || '') && /json|html|javascript|css|text/.test(type)) { out = gzipSync(out, { level: 5 }); extra = { ...extra, 'Content-Encoding': 'gzip', Vary: 'Accept-Encoding' }; } res.writeHead(code, { 'Content-Type': type, 'Cache-Control': 'no-store', 'X-Frame-Options': 'SAMEORIGIN', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'same-origin', 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains', 'Cross-Origin-Opener-Policy': 'same-origin', 'Permissions-Policy': 'camera=(), microphone=(), geolocation=()', ...extra }); res.end(out); };
+const send = (res, code, body, type = 'application/json; charset=utf-8', extra = {}) => { res.writeHead(code, { 'Content-Type': type, 'Cache-Control': 'no-store', 'X-Frame-Options': 'SAMEORIGIN', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'same-origin', 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains', 'Cross-Origin-Opener-Policy': 'same-origin', 'Permissions-Policy': 'camera=(), microphone=(), geolocation=()', ...extra }); res.end(typeof body === 'string' ? body : JSON.stringify(body)); };
 async function readJson(req, limit = 5e6) { let raw = ''; for await (const ch of req) { raw += ch; if (raw.length > limit) throw new Error('too large'); } return JSON.parse(raw || '{}'); }
 function trustedBrowserRequest(req) {
   if (req.headers['sec-fetch-site'] === 'cross-site') return false;
@@ -733,12 +678,10 @@ createServer(async (req, res) => {
         const knownRev = Number(url.searchParams.get('rev'));
         const currentRev = rev();
         if (Number.isFinite(knownRev) && knownRev === currentRev) return send(res, 200, { rev: currentRev, unchanged: true });
-        const since = Number(db.prepare("SELECT v FROM meta WHERE k = 'delta_since'").get()?.v ?? Infinity);
-        if (url.searchParams.get('delta') === '1' && Number.isFinite(knownRev) && knownRev >= since && knownRev < currentRev) return send(res, 200, { ...delta(knownRev), me: publicUser(me) });
-        return send(res, 200, '{"me":' + JSON.stringify(publicUser(me)) + ',' + stateJson().slice(1));
+        return send(res, 200, { ...state(), me: publicUser(me) });
       }
       if (p === '/api/clients' && req.method === 'POST') return send(res, 200, saveClientDirect(await readJson(req), me.login));
-      if ((p === '/api/data' || p === '/api/sync') && (req.method === 'PUT' || req.method === 'POST')) { const b = await readJson(req); if (!admin) { delete b.deleted; delete b.dicts; } const nr = sync(b, me.login); return send(res, 200, { ok: true, rev: nr }); }
+      if ((p === '/api/data' || p === '/api/sync') && (req.method === 'PUT' || req.method === 'POST')) { const b = await readJson(req); if (!admin) { delete b.deleted; delete b.dicts; } sync(b, me.login); return send(res, 200, state()); }
       if (p === '/api/requests' && req.method === 'POST') { const rec = createRequest({ ...(await readJson(req)), author: me.name }, me.login); return send(res, 200, { request: rec, rev: rev() }); }
       return send(res, 404, { error: 'Not found' });
     }
@@ -749,7 +692,7 @@ createServer(async (req, res) => {
     }
     return send(res, 404, 'Not found', 'text/plain');
   } catch (e) {
-    if (e.status === 409) return send(res, 409, { error: e.message, conflicts: e.conflicts, requests: (e.conflicts?.requests || []).map(id => q.getReq.get(Number(id))).filter(Boolean).map(x => JSON.parse(x.data)), clients: (e.conflicts?.clients || []).map(k => q.getCli.get(String(k))).filter(Boolean).map(x => JSON.parse(x.data)) });
+    if (e.status === 409) return send(res, 409, { error: e.message, conflicts: e.conflicts, ...state() });
     console.error(e); return send(res, 400, { error: e.message });
   }
 }).listen(PORT, HOST, () => {
