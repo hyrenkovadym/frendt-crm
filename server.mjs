@@ -525,6 +525,9 @@ const CHAT_NAME_ALIASES = { 'олександр': 'александр', 'саш�
 const personKey = (n) => nameKey(n).split(/\s+/).map(x => CHAT_NAME_ALIASES[x] || x).sort().join(' ');
 const chatUser = (n) => { const k = personKey(n); return k ? U.all.all().find(u => personKey(u.name) === k) : null; };
 const canonicalMember = (n) => chatUser(n)?.name || clip(n, 80).trim();
+const mentionFold = (v) => String(v || '').toLowerCase().replace(/['’`ʼ]/g, '').replace(/\s+/g, ' ').trim();
+const hasChatMention = (text, name) => mentionFold(text).includes('@' + mentionFold(name));
+const addChatMentions = (c, text, provided, sys) => { const names = new Set((Array.isArray(provided) ? provided : []).slice(0, 30).map(x => chatUser(clip(x, 80))?.name).filter(Boolean)); for (const u of U.all.all()) if (hasChatMention(text, u.name)) names.add(u.name); for (const n of names) if (hasChatMention(text, n) && !c.members.includes(n)) { c.members.push(n); sys(`${n} доданий(а) до обговорення через згадку`); } };
 function normalizeChat(c) {
   c.read = c.read || {}; c.members = Array.isArray(c.members) ? c.members : []; c.msgs = Array.isArray(c.msgs) ? c.msgs : [];
   let changed = false; const members = [];
@@ -554,14 +557,14 @@ function chatAct(id, b, who) {
     if (!text && !files.length) return { error: 'Порожнє повідомлення' };
     if (!c.members.includes(who)) c.members.push(who);
     c.msgs.push({ id: chId(), t, who, text, files, reply: b.reply ? clip(b.reply, 40) : null });
-    for (const raw of (Array.isArray(b.mentions) ? b.mentions : []).slice(0, 10).map(x => clip(x, 80))) { const u = chatUser(raw), n = u?.name; if (n && text.includes('@' + raw) && !c.members.includes(n)) { c.members.push(n); sys(`${n} доданий(а) до обговорення через згадку`); } }
+    addChatMentions(c, text, b.mentions, sys);
     c.read[who] = t;
   } else if (b.type === 'edit') {
     const m = c.msgs.find(x => x.id === clip(b.msg, 40) && !x.sys); if (!m) return { error: 'Повідомлення не знайдено' };
     if (canonicalMember(m.who) !== who) return { error: 'Можна редагувати лише власні повідомлення' };
     const text = clip(b.text, 4000).trim(); if (!text && !(m.files || []).length) return { error: 'Порожнє повідомлення' };
     if (text !== String(m.text || '')) { m.text = text; m.edited = t; }
-    for (const raw of (Array.isArray(b.mentions) ? b.mentions : []).slice(0, 10).map(x => clip(x, 80))) { const u = chatUser(raw), n = u?.name; if (n && text.includes('@' + raw) && !c.members.includes(n)) { c.members.push(n); sys(`${n} доданий(а) до обговорення через згадку`); } }
+    addChatMentions(c, text, b.mentions, sys);
   } else if (b.type === 'join') { if (!c.members.includes(who)) { c.members.push(who); sys(`${who} приєднався(лась) до обговорення`); } }
   else if (b.type === 'add') { const u = chatUser(clip(b.name, 80)); if (!u) return { error: 'У цього працівника немає акаунта CRM' }; const n = u.name; if (!c.members.includes(n)) { c.members.push(n); sys(`${who} додав(ла) ${n}`); } }
   else if (b.type === 'remove') { const n = canonicalMember(clip(b.name, 80)); if (c.members.includes(n)) { c.members = c.members.filter(x => x !== n); sys(`${who} прибрав(ла) ${n}`); } }
