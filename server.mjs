@@ -82,6 +82,7 @@ const taskQ = {
   mine: db.prepare('SELECT id, data FROM tasks WHERE manager = ? ORDER BY id'),
   get: db.prepare('SELECT id, manager, data FROM tasks WHERE id = ?'),
   put: db.prepare('INSERT OR REPLACE INTO tasks (id, manager, data, updated_at) VALUES (?, ?, ?, ?)'),
+  del: db.prepare('DELETE FROM tasks WHERE id = ?'),
   max: db.prepare('SELECT COALESCE(MAX(id), 0) AS m FROM tasks'),
   count: db.prepare('SELECT COUNT(*) AS n FROM tasks'),
   duplicate: db.prepare("SELECT id, manager, data FROM tasks WHERE json_extract(data, '$.edrpou') = ? AND id <> ? LIMIT 1")
@@ -644,7 +645,13 @@ createServer(async (req, res) => {
       }
       if (p === '/api/tasks') {
         if (req.method === 'GET') return send(res, 200, { tasks: taskRows(admin ? taskQ.all.all() : taskQ.mine.all(me.name)) });
-        const body = await readJson(req); const task = cleanTask(body); if (!admin) task.manager = me.name;
+        const body = await readJson(req);
+        if (req.method === 'DELETE') {
+          const id = Number(body.id), old = taskQ.get.get(id); if (!old) return send(res, 404, { error: 'Немає такої задачі' });
+          if (!admin && old.manager !== me.name) return send(res, 403, { error: 'Це задача іншого менеджера' });
+          taskQ.del.run(id); return send(res, 200, { ok: true, id });
+        }
+        const task = cleanTask(body); if (!admin) task.manager = me.name;
         const duplicateError = (id, oldCode = '') => {
           if (!task.edrpou || task.edrpou === oldCode) return null;
           const duplicate = taskQ.duplicate.get(task.edrpou, id); if (!duplicate) return null;
