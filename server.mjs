@@ -208,6 +208,17 @@ function createRequest(item, who = '') {
   });
 }
 
+const CLIENT_KEYS = ['edrpou','client','region','district','address','contact','phone1','phone2','email','manager','land','clientComment'];
+function saveClientDirect(body, who = '') {
+  const src = body?.client && typeof body.client === 'object' ? body.client : body;
+  const client = Object.fromEntries(CLIENT_KEYS.map(k => [k, String(src?.[k] ?? '').trim()]));
+  const code = client.edrpou, original = String(body?.original || '').trim();
+  if (!code) throw new Error('Вкажіть ЄДРПОУ клієнта');
+  if (original && original !== code) throw new Error('ЄДРПОУ існуючого клієнта змінювати не можна');
+  if (!original && q.getCli.get(code)) { const e = new Error('Клієнт з таким ЄДРПОУ вже є в базі'); e.status = 409; throw e; }
+  return tx(() => { q.bump.run(); const r = rev(), t = now(), data = JSON.stringify(client); q.upCli.run(code, data, t, r); q.hist.run(t, 'client' + (who ? ':' + who : ''), code, data); return { client, rev: r }; });
+}
+
 // Перенесення даних зі старого data.json (якщо база ще порожня)
 for (const old of [join(DATA_DIR, 'data.json'), join(here, 'data.json')]) {
   const { r, c } = q.count.get();
@@ -598,6 +609,7 @@ createServer(async (req, res) => {
         if (Number.isFinite(knownRev) && knownRev === currentRev) return send(res, 200, { rev: currentRev, unchanged: true });
         return send(res, 200, { ...state(), me: publicUser(me) });
       }
+      if (p === '/api/clients' && req.method === 'POST') return send(res, 200, saveClientDirect(await readJson(req), me.login));
       if ((p === '/api/data' || p === '/api/sync') && (req.method === 'PUT' || req.method === 'POST')) { const b = await readJson(req); if (!admin) { delete b.deleted; delete b.dicts; } sync(b, me.login); return send(res, 200, state()); }
       if (p === '/api/requests' && req.method === 'POST') { const rec = createRequest({ ...(await readJson(req)), author: me.name }, me.login); return send(res, 200, { request: rec, rev: rev() }); }
       return send(res, 404, { error: 'Not found' });
