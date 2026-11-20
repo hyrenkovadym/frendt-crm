@@ -41,6 +41,9 @@ const getHtml = (nonce = '') => {
 
 // ---------- База даних ----------
 const db = new DatabaseSync(DB_FILE);
+// Після перерваного великого запису WAL може зайняти весь диск і не дати серверу стартувати.
+// Checkpoint зберігає всі підтверджені дані в основній БД та прибирає лише тимчасовий WAL.
+try { db.exec('PRAGMA wal_checkpoint(TRUNCATE)'); } catch (e) { console.error('SQLite WAL:', e.message); }
 db.exec(`
   PRAGMA journal_mode = WAL;
   PRAGMA busy_timeout = 5000;
