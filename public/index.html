@@ -1221,8 +1221,8 @@ let prevView='kanban';
 document.querySelector('#globalSearch').oninput=e=>{query=e.target.value.toLowerCase();searchLimit=100;if(query.trim()){if(currentView!=='search'&&currentView!=='leadsearch'){prevView=currentView;setView('search')}else render()}else if(currentView==='search')setView(prevView);else render()};
 document.querySelector('#notifyBtn').onclick=()=>toast('Локальний тестовий режим','Синхронізацію з Google Таблицею ще не підключено');
 /* Клік збоку не закриває заявку або форму: закриття лише явною кнопкою × / «Скасувати». */
-document.querySelector('#drawerBackdrop').onclick=e=>e.preventDefault();
-document.querySelector('#modalBackdrop').onclick=e=>e.preventDefault();
+document.querySelector('#drawerBackdrop').onclick=e=>{if(e.target===e.currentTarget)e.stopPropagation()};
+document.querySelector('#modalBackdrop').onclick=e=>{if(e.target===e.currentTarget)e.stopPropagation()};
 
 /* ---------- Спільна база (сервер із SQLite): надсилаються лише змінені записи, номер нової заявки видає сервер ---------- */
 const API='api/data',API_H={'Content-Type':'application/json','ngrok-skip-browser-warning':'1'};
@@ -1499,7 +1499,7 @@ async function chLoad(id){try{const r=await fetch('api/chat?req='+id,{headers:AP
 /* на сервері: усі обговорення підтягуються кожні 5 с — бейджі, сповіщення, нові повідомлення у відкритому чаті */
 let chSig='';async function chSync(){if(!me)return;try{const [r,pr]=await Promise.all([fetch('api/chat/all',{headers:API_H,cache:'no-store'}),fetch('api/chat/people',{headers:API_H,cache:'no-store'})]);if(!r.ok)return;const x=await r.json();if(pr.ok){const px=await pr.json();CHAT_PEOPLE=px.people||[]}const sig=JSON.stringify(x.chats).length+':'+Object.values(x.chats).reduce((n,c)=>n+c.msgs.length,0)+':'+Object.values(x.chats).map(c=>JSON.stringify(c.members)+JSON.stringify(c.read)+c.pinned).join('');CHAT=x.chats||{};if(sig!==chSig){chSig=sig;if(chState.id&&document.querySelector('#drawer.show'))chRender();if(currentView==='chats')render();else refreshChatBadges();dcChatBadge()}notifCheck()}catch(e){}}
 setInterval(chSync,5000);setTimeout(chSync,1200);
-document.querySelector('#drawerBackdrop').onclick=e=>e.preventDefault();
+document.querySelector('#drawerBackdrop').onclick=e=>{if(e.target===e.currentTarget)e.stopPropagation()};
 async function chAct(id,body){const c=chGet(id);if(me){if(body.type==='msg')body.mentions=chPeople().map(p=>p.n).filter(n=>(body.text||'').includes('@'+n));try{const r=await fetch('api/chat',{method:'POST',headers:API_H,body:JSON.stringify({req:id,...body})});const x=await r.json().catch(()=>({}));if(!r.ok){toast('Не вдалося',x.error||'Спробуйте ще раз');return false}CHAT[id]=x.chat;return true}catch(e){toast('Немає зв’язку із сервером CRM','Повідомлення не надіслано');return false}}
  const who=chMe(),t=Date.now();
  if(body.type==='msg'){c.msgs.push({id:chId(),t,who,text:body.text||'',files:body.files||[],reply:body.reply||null});chPeople().forEach(p=>{if((body.text||'').includes('@'+p.n)&&!c.members.includes(p.n)){c.members.push(p.n);c.msgs.push({id:chId(),t:t+1,sys:`${p.n} доданий(а) до обговорення через згадку`})}})}
