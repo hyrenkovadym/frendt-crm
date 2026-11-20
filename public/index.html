@@ -1354,6 +1354,11 @@ function attachHtmlRequestImport(){
  input.onchange=async()=>{const f=input.files?.[0];if(!f)return;if(state){state.className='import-state';state.textContent='Читаю заявки з HTML…'}try{const res=importHtmlRequests(await f.text());if(state){state.classList.add('ok');state.innerHTML=`Основну таблицю замінено: <b>${res.total}</b> заявок. Додано: <b>${res.added}</b>, оновлено: <b>${res.updated}</b>, без змін: <b>${res.unchanged}</b>, прибрано старих: <b>${res.removed}</b>. Клієнти, акаунти й налаштування не змінені.`}toast('Основну таблицю заявок замінено',`${res.total} заявок · решта бази не змінена`)}catch(err){if(state){state.classList.add('bad');state.textContent='Не вдалося прочитати: '+err.message}}input.value=''}
 }
 new MutationObserver(attachHtmlRequestImport).observe(document.querySelector('#modal'),{childList:true,subtree:true});
+/* Усі помилки показує сама CRM: браузер не має мовчки блокувати кнопки через вбудовану валідацію. */
+const makeFormsResponsive=()=>document.querySelectorAll('form').forEach(f=>{f.noValidate=true});
+new MutationObserver(makeFormsResponsive).observe(document.body,{childList:true,subtree:true});makeFormsResponsive();
+/* Резервний постійний обробник: «Додати клієнта» працює навіть після перемальовування екрана синхронізацією. */
+document.addEventListener('click',e=>{if(!e.target.closest?.('#addClientBtn'))return;queueMicrotask(()=>{if(!document.querySelector('#modalBackdrop.show'))openClientModal()})},true);
 async function boot(){let r=null;try{r=await fetch('api/me',{headers:API_H,cache:'no-store'})}catch(e){}
  if(!r||!(r.headers.get('content-type')||'').includes('json')){render();return}
  const d=await r.json().catch(()=>({}));
