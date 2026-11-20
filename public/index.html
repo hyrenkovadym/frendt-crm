@@ -24,7 +24,9 @@
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%;font-family:var(--bd);color:var(--ink);background:var(--bg);font-size:14px;-webkit-font-smoothing:antialiased}
 button,input,select,textarea{font:inherit;color:inherit}
-button{cursor:pointer}
+button{cursor:pointer;touch-action:manipulation;transition:transform .1s ease,filter .15s ease,opacity .15s ease}
+button:not(:disabled):active{transform:scale(.96)!important;filter:brightness(.86)!important}
+button:disabled{cursor:wait;opacity:.7}
 
 /* ---------- ШАПКА (зелена, логотип інверсний) ---------- */
 .app-header{height:64px;background:var(--g) var(--contour) right center/620px 64px no-repeat;color:#fff;display:flex;align-items:center;padding:0 22px 0 0;position:fixed;inset:0 0 auto 0;z-index:20;box-shadow:0 2px 12px rgba(0,149,59,.25)}
@@ -1355,12 +1357,14 @@ function attachHtmlRequestImport(){
 }
 new MutationObserver(attachHtmlRequestImport).observe(document.querySelector('#modal'),{childList:true,subtree:true});
 /* Усі помилки показує сама CRM: браузер не має мовчки блокувати кнопки через вбудовану валідацію. */
-const makeFormsResponsive=()=>document.querySelectorAll('form').forEach(f=>{f.noValidate=true});
+const makeFormsResponsive=()=>document.querySelectorAll('form').forEach(f=>{f.noValidate=true;f.querySelectorAll('button:not([type])').forEach(b=>{b.type=b.classList.contains('save-btn')||b.classList.contains('add-mini')?'submit':'button'})});
 new MutationObserver(makeFormsResponsive).observe(document.body,{childList:true,subtree:true});makeFormsResponsive();
 /* Резервний постійний обробник: «Додати клієнта» працює навіть після перемальовування екрана синхронізацією. */
 document.addEventListener('click',e=>{if(!e.target.closest?.('#addClientBtn'))return;queueMicrotask(()=>{if(!document.querySelector('#modalBackdrop.show'))openClientModal()})},true);
 let clientSaving=false;
 document.addEventListener('submit',async e=>{const form=e.target;if(form?.id!=='clientForm')return;e.preventDefault();e.stopImmediatePropagation();if(clientSaving)return;const d=Object.fromEntries(CLIENT_FIELDS.map(f=>[f,String(form.elements[f]?.value??'').trim()]));if(!has(d.edrpou)){toast('Додай ЄДРПОУ','Без ЄДРПОУ клієнта не можна зберегти');return}const btn=form.querySelector('.save-btn'),label=btn?.textContent||'';clientSaving=true;if(btn){btn.disabled=true;btn.textContent='ЗБЕРІГАЮ…'}try{const original=form.elements.edrpou?.readOnly?d.edrpou:'',x=await api('api/clients','POST',{client:d,original}),old=clients.find(c=>same(c.edrpou,d.edrpou));if(old)Object.assign(old,x.client);else clients.push(x.client);snapCli.set(d.edrpou,jr(x.client));if(typeof x.rev==='number')serverRev=x.rev;storeLocal();for(const[k,f]of[['region','region'],['district','district'],['manager','manager']]){const v=d[f];if(has(v)&&!DICTS[k].list.some(a=>same(a,v)))addDictValue(k,v)}saveCustom();applyCustom();const pf=currentView==='requests'&&root.querySelector('#requestForm');closeModal();if(pf){pf.querySelector('#edrpouList').innerHTML=clients.map(c=>`<option value="${esc(c.edrpou)}">${esc(c.client)}</option>`).join('');autofillClient(pf);updateLivePreview(pf)}else render();toast(original?'Картку клієнта оновлено':'Клієнта додано в базу',d.client||d.edrpou)}catch(err){toast('Клієнта не збережено',err.message||'Спробуйте ще раз');if(btn?.isConnected){btn.disabled=false;btn.textContent=label}}finally{clientSaving=false}},true);
+/* Жорстка прив'язка саме кнопки збереження клієнта: клік завжди запускає submit один раз. */
+document.addEventListener('click',e=>{const btn=e.target.closest?.('#clientForm .save-btn');if(!btn)return;e.preventDefault();if(!clientSaving)btn.form?.requestSubmit()},true);
 async function boot(){let r=null;try{r=await fetch('api/me',{headers:API_H,cache:'no-store'})}catch(e){}
  if(!r||!(r.headers.get('content-type')||'').includes('json')){render();return}
  const d=await r.json().catch(()=>({}));
