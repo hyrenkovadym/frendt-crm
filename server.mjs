@@ -454,13 +454,29 @@ const CHQ = {
 };
 const chId = () => Date.now().toString(36) + randomBytes(3).toString('hex');
 const clip = (v, n) => String(v ?? '').slice(0, n);
+const CHAT_NAME_ALIASES = { 'олександр': 'александр', 'саша': 'александр', 'таня': 'тетяна' };
+const personKey = (n) => nameKey(n).split(/\s+/).map(x => CHAT_NAME_ALIASES[x] || x).sort().join(' ');
+const chatUser = (n) => { const k = personKey(n); return k ? U.all.all().find(u => personKey(u.name) === k) : null; };
+const canonicalMember = (n) => chatUser(n)?.name || clip(n, 80).trim();
+function normalizeChat(c) {
+  c.read = c.read || {}; c.members = Array.isArray(c.members) ? c.members : []; c.msgs = Array.isArray(c.msgs) ? c.msgs : [];
+  let changed = false; const members = [];
+  for (const old of c.members) { const u = chatUser(old); if (!u) { changed = true; continue; } const n = u.name; if (n !== old) changed = true; if (!members.includes(n)) members.push(n); else changed = true; }
+  c.members = members;
+  for (const old of Object.keys(c.read)) { const n = canonicalMember(old); if (n && n !== old) { c.read[n] = Math.max(Number(c.read[n]) || 0, Number(c.read[old]) || 0); delete c.read[old]; changed = true; } }
+  for (const m of c.msgs) {
+    if (m.who) { const n = canonicalMember(m.who); if (n !== m.who) { m.who = n; changed = true; } }
+    if (m.reacts) for (const e of Object.keys(m.reacts)) { const a = [...new Set((m.reacts[e] || []).map(canonicalMember).filter(Boolean))]; if (JSON.stringify(a) !== JSON.stringify(m.reacts[e])) { m.reacts[e] = a; changed = true; } }
+  }
+  return changed;
+}
 function chatOf(id) {
-  const row = CHQ.get.get(id); if (row) return JSON.parse(row.data);
+  const row = CHQ.get.get(id); if (row) { const c = JSON.parse(row.data); if (normalizeChat(c)) CHQ.put.run(id, JSON.stringify(c), now()); return c; }
   const r = db.prepare('SELECT data FROM requests WHERE id = ?').get(id); const req = r ? JSON.parse(r.data) : null;
-  let mgr = req?.manager || ''; if (!mgr && req?.edrpou) { const cr = db.prepare('SELECT data FROM clients WHERE edrpou = ?').get(String(req.edrpou).trim()); if (cr) mgr = JSON.parse(cr.data).manager || ''; } return { members: mgr ? [mgr] : [], msgs: [], read: {}, pinned: null };
+  let mgr = req?.manager || ''; if (!mgr && req?.edrpou) { const cr = db.prepare('SELECT data FROM clients WHERE edrpou = ?').get(String(req.edrpou).trim()); if (cr) mgr = JSON.parse(cr.data).manager || ''; } mgr = canonicalMember(mgr); return { members: chatUser(mgr) ? [mgr] : [], msgs: [], read: {}, pinned: null };
 }
 function chatAct(id, b, who) {
-  const c = chatOf(id); const t = Date.now(); c.read = c.read || {}; c.members = c.members || []; c.msgs = c.msgs || [];
+  const c = chatOf(id); const t = Date.now(); who = canonicalMember(who); c.read = c.read || {}; c.members = c.members || []; c.msgs = c.msgs || [];
   const sys = (text) => c.msgs.push({ id: chId(), t, sys: text });
   if (b.type === 'msg') {
     const text = clip(b.text, 4000).trim(); const files = (Array.isArray(b.files) ? b.files : []).slice(0, 10).map(f => {
@@ -471,11 +487,11 @@ function chatAct(id, b, who) {
     if (!text && !files.length) return { error: 'Порожнє повідомлення' };
     if (!c.members.includes(who)) c.members.push(who);
     c.msgs.push({ id: chId(), t, who, text, files, reply: b.reply ? clip(b.reply, 40) : null });
-    for (const n of (Array.isArray(b.mentions) ? b.mentions : []).slice(0, 10).map(x => clip(x, 80))) if (n && text.includes('@' + n) && !c.members.includes(n)) { c.members.push(n); sys(`${n} доданий(а) до обговорення через згадку`); }
+    for (const raw of (Array.isArray(b.mentions) ? b.mentions : []).slice(0, 10).map(x => clip(x, 80))) { const u = chatUser(raw), n = u?.name; if (n && text.includes('@' + raw) && !c.members.includes(n)) { c.members.push(n); sys(`${n} доданий(а) до обговорення через згадку`); } }
     c.read[who] = t;
   } else if (b.type === 'join') { if (!c.members.includes(who)) { c.members.push(who); sys(`${who} приєднався(лась) до обговорення`); } }
-  else if (b.type === 'add') { const n = clip(b.name, 80).trim(); if (n && !c.members.includes(n)) { c.members.push(n); sys(`${who} додав(ла) ${n}`); } }
-  else if (b.type === 'remove') { const n = clip(b.name, 80); if (c.members.includes(n)) { c.members = c.members.filter(x => x !== n); sys(`${who} прибрав(ла) ${n}`); } }
+  else if (b.type === 'add') { const u = chatUser(clip(b.name, 80)); if (!u) return { error: 'У цього працівника немає акаунта CRM' }; const n = u.name; if (!c.members.includes(n)) { c.members.push(n); sys(`${who} додав(ла) ${n}`); } }
+  else if (b.type === 'remove') { const n = canonicalMember(clip(b.name, 80)); if (c.members.includes(n)) { c.members = c.members.filter(x => x !== n); sys(`${who} прибрав(ла) ${n}`); } }
   else if (b.type === 'react') { const m = c.msgs.find(x => x.id === b.msg); const e = clip(b.emoji, 8); if (m && e) { m.reacts = m.reacts || {}; const a = m.reacts[e] = m.reacts[e] || []; const i = a.indexOf(who); i >= 0 ? a.splice(i, 1) : a.push(who); } }
   else if (b.type === 'pin') { const was = c.pinned === b.msg; if (was || c.msgs.some(x => x.id === b.msg)) { c.pinned = was ? null : clip(b.msg, 40); sys(`${who} ${was ? 'відкріпив(ла)' : 'закріпив(ла)'} повідомлення`); } }
   else if (b.type === 'read') c.read[who] = t;
@@ -484,6 +500,7 @@ function chatAct(id, b, who) {
   CHQ.put.run(id, JSON.stringify(c), now()); return { chat: c };
 }
 async function chatRoutes(req, res, p, url, me) {
+  if (p === '/api/chat/people' && req.method === 'GET') return send(res, 200, { people: U.all.all().map(u => ({ name: u.name, role: u.role })) });
   if (p === '/api/chat/upload' && req.method === 'POST') {
     const b = await readJson(req, 15e6), id = Number(b.req); if (!Number.isInteger(id) || !db.prepare('SELECT 1 FROM requests WHERE id = ?').get(id)) return send(res, 404, { error: 'Немає такої заявки' });
     const m = /^data:([^;,]+);base64,([a-z0-9+/=]+)$/i.exec(String(b.data || '')), type = String(m?.[1] || '').toLowerCase(), ext = CHAT_FILE_TYPES[type]; if (!m || !ext) return send(res, 400, { error: 'Цей тип файла не підтримується' });
@@ -494,7 +511,7 @@ async function chatRoutes(req, res, p, url, me) {
   const fm = /^\/api\/chat\/files\/([a-z0-9.-]+)$/i.exec(p);
   if (fm && req.method === 'GET') { const ext = fm[1].split('.').pop().toLowerCase(), type = CHAT_EXT_TYPES[ext]; if (!type) return send(res, 404, { error: 'Файл не знайдено' });
     try { const data = await readFile(join(CHAT_FILES_DIR, fm[1])), original = clip(url.searchParams.get('name') || fm[1], 160).replace(/["\r\n]/g, ''); res.writeHead(200, { 'Content-Type': type, 'Content-Length': data.length, 'Content-Disposition': `${type.startsWith('image/') || ext === 'pdf' ? 'inline' : 'attachment'}; filename*=UTF-8''${encodeURIComponent(original)}`, 'Cache-Control': 'private, max-age=31536000, immutable', 'X-Content-Type-Options': 'nosniff' }); return res.end(data); } catch { return send(res, 404, { error: 'Файл не знайдено' }); } }
-  if (p === '/api/chat/all' && req.method === 'GET') { const out = {}; for (const r of CHQ.all.all()) { const c = JSON.parse(r.data); if ((c.members || []).includes(me.name)) out[r.req_id] = c; } return send(res, 200, { chats: out }); }
+  if (p === '/api/chat/all' && req.method === 'GET') { const out = {}, mine = canonicalMember(me.name); for (const r of CHQ.all.all()) { const c = JSON.parse(r.data); if (normalizeChat(c)) CHQ.put.run(r.req_id, JSON.stringify(c), now()); if ((c.members || []).includes(mine)) out[r.req_id] = c; } return send(res, 200, { chats: out }); }
   if (p === '/api/chat') {
     if (req.method === 'GET') { const id = Number(url.searchParams.get('req')); if (!Number.isInteger(id)) return send(res, 400, { error: 'req' }); return send(res, 200, { chat: chatOf(id) }); }
     if (req.method === 'POST') { const b = await readJson(req); const id = Number(b.req); if (!Number.isInteger(id) || !db.prepare('SELECT 1 FROM requests WHERE id = ?').get(id)) return send(res, 404, { error: 'Немає такої заявки' });
