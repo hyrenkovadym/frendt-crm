@@ -100,6 +100,61 @@ const taskQ = {
   });
   console.log(`Задачі менеджерів: ${taskQ.count.get().n}`);
 })();
+// ---------- Разове завантаження активних задач з Bitrix (таблиця від 20.11.2026) ----------
+// Змінює ЛИШЕ таблицю tasks («Задачі менеджерів»). Заявки, клієнти, канбан, користувачі — не чіпаються.
+// Збіг з наявною задачею (за ЄДРПОУ, якщо його нема — за телефоном): опис з Bitrix дописується в «Коментар 2»,
+// «Коли дзвонити» — пізніша з двох дат, порожні поля доповнюються; менеджер і коментарі менеджерів не змінюються.
+// Без збігу — нова задача. Виконується один раз (позначка tasks_bitrix_20261120 у meta).
+(function importBitrixTasksOnce() {
+  const KEY = 'tasks_bitrix_20261120';
+  if (db.prepare('SELECT v FROM meta WHERE k = ?').get(KEY)) return;
+  const FILE = join(here, 'tasks_bitrix.json');
+  if (!existsSync(FILE)) return;
+  const recs = JSON.parse(readFileSync(FILE, 'utf8'));
+  if (!Array.isArray(recs) || !recs.length) return;
+  const pk = (...vals) => vals.flatMap(v => String(v || '').split(/[,;\/\n]/)).map(x => x.replace(/\D/g, '').slice(-9)).filter(x => x.length === 9);
+  const ymd = (s) => { const m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(String(s || '').trim()); return m ? +(m[3] + m[2] + m[1]) : 0; };
+  const timestamp = now();
+  let added = 0, updated = 0;
+  tx(() => {
+    const byE = new Map(), byP = new Map(), cache = new Map();
+    for (const r of taskQ.all.all()) {
+      const t = JSON.parse(r.data); cache.set(r.id, t);
+      const e = String(t.edrpou || '').trim(); if (e && !byE.has(e)) byE.set(e, r.id);
+      for (const p of pk(t.phone, t.phones)) if (!byP.has(p)) byP.set(p, r.id);
+    }
+    let next = taskQ.max.get().m + 1;
+    const touched = new Set();
+    for (const b of recs) {
+      const e = String(b.edrpou || '').trim();
+      let id = e ? byE.get(e) : undefined;
+      if (id === undefined && !e) for (const p of pk(b.phone, b.phones)) { if (byP.has(p)) { id = byP.get(p); break; } }
+      if (id === undefined) {
+        const t = cleanTask({ ...b, bitrix: b.company ? `Компанія: ${b.company};` : '' });
+        id = next++; cache.set(id, t); taskQ.put.run(id, t.manager || '', JSON.stringify(t), timestamp); added++;
+        if (e) byE.set(e, id); for (const p of pk(t.phone, t.phones)) if (!byP.has(p)) byP.set(p, id);
+        continue;
+      }
+      const t = cache.get(id);
+      for (const k of ['edrpou', 'company', 'region', 'district', 'address', 'lpr', 'email']) if (!t[k] && b[k]) t[k] = b[k];
+      if (!t.phone && b.phone) t.phone = b.phone;
+      const have = new Set(pk(t.phone, t.phones));
+      const extra = [b.phone, ...String(b.phones || '').split(/,\s*/)].filter(x => x && pk(x).length && !have.has(pk(x)[0]));
+      if (extra.length) t.phones = [t.phones, ...extra].filter(Boolean).join(', ');
+      const desc = String(b.task || '').trim();
+      if (desc && ![t.task, t.c1, t.c2].some(x => String(x || '').includes(desc))) {
+        if (!t.task) t.task = desc; else t.c2 = `Bitrix 20.11.2026: ${desc}` + (t.c2 ? `\n${t.c2}` : '');
+      }
+      if (b.callDate && ymd(b.callDate) > ymd(t.callDate)) t.callDate = b.callDate;
+      if (!t.manager && b.manager) t.manager = b.manager;
+      const clean = cleanTask(t); cache.set(id, clean);
+      taskQ.put.run(id, clean.manager || '', JSON.stringify(clean), timestamp);
+      if (!touched.has(id)) { touched.add(id); updated++; }
+    }
+    db.prepare('INSERT OR REPLACE INTO meta (k, v) VALUES (?, ?)').run(KEY, timestamp);
+  });
+  console.log(`Задачі з Bitrix: додано ${added}, оновлено ${updated}, усього ${taskQ.count.get().n}`);
+})();
 const taskRows = (rows) => rows.map(row => ({ id: row.id, ...JSON.parse(row.data) }));
 
 // ---------- Перше заповнення: усі заявки й клієнти з Google-таблиці «Облік заявок FRENDT» ----------
