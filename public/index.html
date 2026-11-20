@@ -1218,8 +1218,9 @@ document.querySelector('#addRequestBtn').onclick=openRequestModal;
 let prevView='kanban';
 document.querySelector('#globalSearch').oninput=e=>{query=e.target.value.toLowerCase();searchLimit=100;if(query.trim()){if(currentView!=='search'&&currentView!=='leadsearch'){prevView=currentView;setView('search')}else render()}else if(currentView==='search')setView(prevView);else render()};
 document.querySelector('#notifyBtn').onclick=()=>toast('Локальний тестовий режим','Синхронізацію з Google Таблицею ще не підключено');
-document.querySelector('#drawerBackdrop').onclick=closeDrawer;
-document.querySelector('#modalBackdrop').onclick=e=>{if(e.target.id==='modalBackdrop')closeModal()};
+/* Клік збоку не закриває заявку або форму: закриття лише явною кнопкою × / «Скасувати». */
+document.querySelector('#drawerBackdrop').onclick=e=>e.preventDefault();
+document.querySelector('#modalBackdrop').onclick=e=>e.preventDefault();
 
 /* ---------- Спільна база (сервер із SQLite): надсилаються лише змінені записи, номер нової заявки видає сервер ---------- */
 const API='api/data',API_H={'Content-Type':'application/json','ngrok-skip-browser-warning':'1'};
@@ -1249,7 +1250,7 @@ function pushServer(){if(!serverMode)return;clearTimeout(pushTimer);pushTimer=se
  pushing=false;if(dirty().reqs.length||dirty().clis.length)pushServer()},250)}
 async function createOnServer(r){const body={...r};delete body.id;const x=await fetch('api/requests',{method:'POST',headers:API_H,body:JSON.stringify(body)});if(!x.ok)throw new Error('create');const {request}=await x.json();snapReq.set(request.id,jr(request));return request}
 async function pullServer(first=false){if(pulling)return false;pulling=true;try{const r=await fetch(API+'?rev='+(first?-1:serverRev)+'&_='+Date.now(),{headers:API_H,cache:'no-store'});if(r.status===401&&me){showAuth({});return false}if(!r.ok||!(r.headers.get('content-type')||'').includes('json'))return false;const d=await r.json();if(typeof d.rev!=='number')return false;serverMode=true;if(d.unchanged){setSyncState(true);if(!first)pushServer();return true}
- if(d.rev!==serverRev&&!pushing){const openId=document.querySelector('#drawer.show')?window.__openReq:null;applyServer(d,!first);render();if(openId)openDrawer(openId)}
+ if(d.rev!==serverRev&&!pushing){const keepUi=document.querySelector('#modalBackdrop.show')||document.querySelector('#drawer.show')||root.querySelector('form');if(!keepUi){applyServer(d,!first);render()}else refreshChatBadges()}
  if(first)pushServer();
  setSyncState(true);if(!first)pushServer();return true}catch(e){if(serverMode)setSyncState(false);return false}finally{pulling=false}}
 function setSyncState(ok){const b=document.querySelector('.automation-state');if(!b)return;b.querySelector('b').textContent=ok?'Спільна база':'Немає зв’язку із сервером';b.querySelector('small').textContent=ok?'Усі бачать ті самі заявки й клієнтів':'Зміни поки зберігаються лише тут';b.classList.toggle('offline',!ok)}
@@ -1487,7 +1488,7 @@ async function chLoad(id){try{const r=await fetch('api/chat?req='+id,{headers:AP
 /* на сервері: усі обговорення підтягуються кожні 5 с — бейджі, сповіщення, нові повідомлення у відкритому чаті */
 let chSig='';async function chSync(){if(!me)return;try{const [r,pr]=await Promise.all([fetch('api/chat/all',{headers:API_H,cache:'no-store'}),fetch('api/chat/people',{headers:API_H,cache:'no-store'})]);if(!r.ok)return;const x=await r.json();if(pr.ok){const px=await pr.json();CHAT_PEOPLE=px.people||[]}const sig=JSON.stringify(x.chats).length+':'+Object.values(x.chats).reduce((n,c)=>n+c.msgs.length,0)+':'+Object.values(x.chats).map(c=>JSON.stringify(c.members)+JSON.stringify(c.read)+c.pinned).join('');CHAT=x.chats||{};if(sig!==chSig){chSig=sig;if(chState.id&&document.querySelector('#drawer.show'))chRender();if(currentView==='chats')render();else refreshChatBadges();dcChatBadge()}notifCheck()}catch(e){}}
 setInterval(chSync,5000);setTimeout(chSync,1200);
-document.querySelector('#drawerBackdrop').onclick=()=>closeDrawer();
+document.querySelector('#drawerBackdrop').onclick=e=>e.preventDefault();
 async function chAct(id,body){const c=chGet(id);if(me){if(body.type==='msg')body.mentions=chPeople().map(p=>p.n).filter(n=>(body.text||'').includes('@'+n));try{const r=await fetch('api/chat',{method:'POST',headers:API_H,body:JSON.stringify({req:id,...body})});const x=await r.json().catch(()=>({}));if(!r.ok){toast('Не вдалося',x.error||'Спробуйте ще раз');return false}CHAT[id]=x.chat;return true}catch(e){toast('Немає зв’язку із сервером CRM','Повідомлення не надіслано');return false}}
  const who=chMe(),t=Date.now();
  if(body.type==='msg'){c.msgs.push({id:chId(),t,who,text:body.text||'',files:body.files||[],reply:body.reply||null});chPeople().forEach(p=>{if((body.text||'').includes('@'+p.n)&&!c.members.includes(p.n)){c.members.push(p.n);c.msgs.push({id:chId(),t:t+1,sys:`${p.n} доданий(а) до обговорення через згадку`})}})}
