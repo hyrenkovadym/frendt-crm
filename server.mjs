@@ -274,7 +274,7 @@ const publicUser = (u) => u && ({ login: u.login, name: u.name, role: u.role });
 
 // ---------- HTTP ----------
 const send = (res, code, body, type = 'application/json; charset=utf-8', extra = {}) => { res.writeHead(code, { 'Content-Type': type, 'Cache-Control': 'no-store', 'X-Frame-Options': 'SAMEORIGIN', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'same-origin', 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains', 'Cross-Origin-Opener-Policy': 'same-origin', 'Permissions-Policy': 'camera=(), microphone=(), geolocation=()', ...extra }); res.end(typeof body === 'string' ? body : JSON.stringify(body)); };
-async function readJson(req) { let raw = ''; for await (const ch of req) { raw += ch; if (raw.length > 5e6) throw new Error('too large'); } return JSON.parse(raw || '{}'); }
+async function readJson(req, limit = 5e6) { let raw = ''; for await (const ch of req) { raw += ch; if (raw.length > limit) throw new Error('too large'); } return JSON.parse(raw || '{}'); }
 function trustedBrowserRequest(req) {
   if (req.headers['sec-fetch-site'] === 'cross-site') return false;
   const origin = req.headers.origin;
@@ -439,6 +439,14 @@ async function ringostatRoutes(req, res, p, url, me, admin) {
 
 // ---------- Обговорення заявок (чат біля кожної заявки) ----------
 db.exec(`CREATE TABLE IF NOT EXISTS chats (req_id INTEGER PRIMARY KEY, data TEXT NOT NULL, updated_at TEXT NOT NULL)`);
+const CHAT_FILE_TYPES = {
+  'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif', 'application/pdf': 'pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx', 'application/msword': 'doc',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx', 'application/vnd.ms-excel': 'xls',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx', 'application/vnd.ms-powerpoint': 'ppt',
+  'text/plain': 'txt', 'text/csv': 'csv', 'application/zip': 'zip', 'application/x-zip-compressed': 'zip'
+};
+const CHAT_EXT_TYPES = { png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif', pdf: 'application/pdf', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', doc: 'application/msword', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', xls: 'application/vnd.ms-excel', pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation', ppt: 'application/vnd.ms-powerpoint', txt: 'text/plain; charset=utf-8', csv: 'text/csv; charset=utf-8', zip: 'application/zip' };
 const CHQ = {
   get: db.prepare('SELECT data FROM chats WHERE req_id = ?'),
   put: db.prepare('INSERT OR REPLACE INTO chats (req_id, data, updated_at) VALUES (?, ?, ?)'),
@@ -458,7 +466,7 @@ function chatAct(id, b, who) {
     const text = clip(b.text, 4000).trim(); const files = (Array.isArray(b.files) ? b.files : []).slice(0, 10).map(f => {
       if (typeof f === 'string') return clip(f, 200);
       const file = { name: clip(f?.name, 160), url: clip(f?.url, 240), type: clip(f?.type, 80), size: Math.max(0, Number(f?.size) || 0) };
-      return file.name && /^\/api\/chat\/files\/[a-z0-9.-]+$/i.test(file.url) && /^image\/(png|jpeg|webp|gif)$/i.test(file.type) ? file : null;
+      return file.name && /^\/api\/chat\/files\/[a-z0-9.-]+$/i.test(file.url) && CHAT_FILE_TYPES[file.type.toLowerCase()] ? file : null;
     }).filter(Boolean);
     if (!text && !files.length) return { error: 'Порожнє повідомлення' };
     if (!c.members.includes(who)) c.members.push(who);
@@ -477,15 +485,15 @@ function chatAct(id, b, who) {
 }
 async function chatRoutes(req, res, p, url, me) {
   if (p === '/api/chat/upload' && req.method === 'POST') {
-    const b = await readJson(req), id = Number(b.req); if (!Number.isInteger(id) || !db.prepare('SELECT 1 FROM requests WHERE id = ?').get(id)) return send(res, 404, { error: 'Немає такої заявки' });
-    const m = /^data:(image\/(png|jpeg|webp|gif));base64,([a-z0-9+/=]+)$/i.exec(String(b.data || '')); if (!m) return send(res, 400, { error: 'Дозволені PNG, JPG, WebP або GIF' });
-    const data = Buffer.from(m[3], 'base64'); if (!data.length || data.length > 3 * 1024 * 1024) return send(res, 413, { error: 'Зображення має бути до 3 МБ' });
-    const ext = m[2].toLowerCase() === 'jpeg' ? 'jpg' : m[2].toLowerCase(), name = `${id}-${Date.now().toString(36)}-${randomBytes(4).toString('hex')}.${ext}`;
-    await writeFile(join(CHAT_FILES_DIR, name), data); return send(res, 200, { file: { name: clip(b.name || `screenshot.${ext}`, 160), url: `/api/chat/files/${name}`, type: m[1].toLowerCase(), size: data.length } });
+    const b = await readJson(req, 15e6), id = Number(b.req); if (!Number.isInteger(id) || !db.prepare('SELECT 1 FROM requests WHERE id = ?').get(id)) return send(res, 404, { error: 'Немає такої заявки' });
+    const m = /^data:([^;,]+);base64,([a-z0-9+/=]+)$/i.exec(String(b.data || '')), type = String(m?.[1] || '').toLowerCase(), ext = CHAT_FILE_TYPES[type]; if (!m || !ext) return send(res, 400, { error: 'Цей тип файла не підтримується' });
+    const data = Buffer.from(m[2], 'base64'); if (!data.length || data.length > 10 * 1024 * 1024) return send(res, 413, { error: 'Файл має бути до 10 МБ' });
+    const name = `${id}-${Date.now().toString(36)}-${randomBytes(4).toString('hex')}.${ext}`;
+    await writeFile(join(CHAT_FILES_DIR, name), data); return send(res, 200, { file: { name: clip(b.name || `file.${ext}`, 160), url: `/api/chat/files/${name}`, type, size: data.length } });
   }
   const fm = /^\/api\/chat\/files\/([a-z0-9.-]+)$/i.exec(p);
-  if (fm && req.method === 'GET') { const ext = fm[1].split('.').pop().toLowerCase(), types = { png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif' }; if (!types[ext]) return send(res, 404, { error: 'Файл не знайдено' });
-    try { const data = await readFile(join(CHAT_FILES_DIR, fm[1])); res.writeHead(200, { 'Content-Type': types[ext], 'Content-Length': data.length, 'Cache-Control': 'private, max-age=31536000, immutable', 'X-Content-Type-Options': 'nosniff' }); return res.end(data); } catch { return send(res, 404, { error: 'Файл не знайдено' }); } }
+  if (fm && req.method === 'GET') { const ext = fm[1].split('.').pop().toLowerCase(), type = CHAT_EXT_TYPES[ext]; if (!type) return send(res, 404, { error: 'Файл не знайдено' });
+    try { const data = await readFile(join(CHAT_FILES_DIR, fm[1])), original = clip(url.searchParams.get('name') || fm[1], 160).replace(/["\r\n]/g, ''); res.writeHead(200, { 'Content-Type': type, 'Content-Length': data.length, 'Content-Disposition': `${type.startsWith('image/') || ext === 'pdf' ? 'inline' : 'attachment'}; filename*=UTF-8''${encodeURIComponent(original)}`, 'Cache-Control': 'private, max-age=31536000, immutable', 'X-Content-Type-Options': 'nosniff' }); return res.end(data); } catch { return send(res, 404, { error: 'Файл не знайдено' }); } }
   if (p === '/api/chat/all' && req.method === 'GET') { const out = {}; for (const r of CHQ.all.all()) { const c = JSON.parse(r.data); if ((c.members || []).includes(me.name)) out[r.req_id] = c; } return send(res, 200, { chats: out }); }
   if (p === '/api/chat') {
     if (req.method === 'GET') { const id = Number(url.searchParams.get('req')); if (!Number.isInteger(id)) return send(res, 400, { error: 'req' }); return send(res, 200, { chat: chatOf(id) }); }
