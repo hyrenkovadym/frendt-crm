@@ -5,7 +5,7 @@
 //   HOST      — адреса (за замовчуванням 127.0.0.1; на сервері — 0.0.0.0)
 //   DATA_DIR  — папка з базою та резервними копіями (за замовчуванням ~/FRENDT-CRM-data)
 import { createServer } from 'node:http';
-import { readFile, mkdir, readdir, rm, copyFile } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, readdir, rm, copyFile } from 'node:fs/promises';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { homedir } from 'node:os';
@@ -19,6 +19,8 @@ const HOST = process.env.HOST || '127.0.0.1';
 const DATA_DIR = process.env.DATA_DIR || join(homedir(), 'FRENDT-CRM-data');
 const BACKUP_DIR = join(DATA_DIR, 'backups');
 await mkdir(BACKUP_DIR, { recursive: true });
+const CHAT_FILES_DIR = join(DATA_DIR, 'chat-files');
+await mkdir(CHAT_FILES_DIR, { recursive: true });
 const DB_FILE = join(DATA_DIR, 'frendt-crm.db');
 
 /* __EMBEDDED_HTML__ */
@@ -453,7 +455,11 @@ function chatAct(id, b, who) {
   const c = chatOf(id); const t = Date.now(); c.read = c.read || {}; c.members = c.members || []; c.msgs = c.msgs || [];
   const sys = (text) => c.msgs.push({ id: chId(), t, sys: text });
   if (b.type === 'msg') {
-    const text = clip(b.text, 4000).trim(); const files = (Array.isArray(b.files) ? b.files : []).slice(0, 10).map(f => clip(f, 200));
+    const text = clip(b.text, 4000).trim(); const files = (Array.isArray(b.files) ? b.files : []).slice(0, 10).map(f => {
+      if (typeof f === 'string') return clip(f, 200);
+      const file = { name: clip(f?.name, 160), url: clip(f?.url, 240), type: clip(f?.type, 80), size: Math.max(0, Number(f?.size) || 0) };
+      return file.name && /^\/api\/chat\/files\/[a-z0-9.-]+$/i.test(file.url) && /^image\/(png|jpeg|webp|gif)$/i.test(file.type) ? file : null;
+    }).filter(Boolean);
     if (!text && !files.length) return { error: 'Порожнє повідомлення' };
     if (!c.members.includes(who)) c.members.push(who);
     c.msgs.push({ id: chId(), t, who, text, files, reply: b.reply ? clip(b.reply, 40) : null });
@@ -470,6 +476,16 @@ function chatAct(id, b, who) {
   CHQ.put.run(id, JSON.stringify(c), now()); return { chat: c };
 }
 async function chatRoutes(req, res, p, url, me) {
+  if (p === '/api/chat/upload' && req.method === 'POST') {
+    const b = await readJson(req), id = Number(b.req); if (!Number.isInteger(id) || !db.prepare('SELECT 1 FROM requests WHERE id = ?').get(id)) return send(res, 404, { error: 'Немає такої заявки' });
+    const m = /^data:(image\/(png|jpeg|webp|gif));base64,([a-z0-9+/=]+)$/i.exec(String(b.data || '')); if (!m) return send(res, 400, { error: 'Дозволені PNG, JPG, WebP або GIF' });
+    const data = Buffer.from(m[3], 'base64'); if (!data.length || data.length > 3 * 1024 * 1024) return send(res, 413, { error: 'Зображення має бути до 3 МБ' });
+    const ext = m[2].toLowerCase() === 'jpeg' ? 'jpg' : m[2].toLowerCase(), name = `${id}-${Date.now().toString(36)}-${randomBytes(4).toString('hex')}.${ext}`;
+    await writeFile(join(CHAT_FILES_DIR, name), data); return send(res, 200, { file: { name: clip(b.name || `screenshot.${ext}`, 160), url: `/api/chat/files/${name}`, type: m[1].toLowerCase(), size: data.length } });
+  }
+  const fm = /^\/api\/chat\/files\/([a-z0-9.-]+)$/i.exec(p);
+  if (fm && req.method === 'GET') { const ext = fm[1].split('.').pop().toLowerCase(), types = { png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif' }; if (!types[ext]) return send(res, 404, { error: 'Файл не знайдено' });
+    try { const data = await readFile(join(CHAT_FILES_DIR, fm[1])); res.writeHead(200, { 'Content-Type': types[ext], 'Content-Length': data.length, 'Cache-Control': 'private, max-age=31536000, immutable', 'X-Content-Type-Options': 'nosniff' }); return res.end(data); } catch { return send(res, 404, { error: 'Файл не знайдено' }); } }
   if (p === '/api/chat/all' && req.method === 'GET') { const out = {}; for (const r of CHQ.all.all()) { const c = JSON.parse(r.data); if ((c.members || []).includes(me.name)) out[r.req_id] = c; } return send(res, 200, { chats: out }); }
   if (p === '/api/chat') {
     if (req.method === 'GET') { const id = Number(url.searchParams.get('req')); if (!Number.isInteger(id)) return send(res, 400, { error: 'req' }); return send(res, 200, { chat: chatOf(id) }); }
