@@ -461,7 +461,7 @@ const canonicalMember = (n) => chatUser(n)?.name || clip(n, 80).trim();
 function normalizeChat(c) {
   c.read = c.read || {}; c.members = Array.isArray(c.members) ? c.members : []; c.msgs = Array.isArray(c.msgs) ? c.msgs : [];
   let changed = false; const members = [];
-  for (const old of c.members) { const u = chatUser(old); if (!u) { changed = true; continue; } const n = u.name; if (n !== old) changed = true; if (!members.includes(n)) members.push(n); else changed = true; }
+  for (const old of c.members) { const n = canonicalMember(old); if (n !== old) changed = true; if (n && !members.includes(n)) members.push(n); else if (n) changed = true; }
   c.members = members;
   for (const old of Object.keys(c.read)) { const n = canonicalMember(old); if (n && n !== old) { c.read[n] = Math.max(Number(c.read[n]) || 0, Number(c.read[old]) || 0); delete c.read[old]; changed = true; } }
   for (const m of c.msgs) {
