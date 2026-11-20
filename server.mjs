@@ -77,7 +77,7 @@ const q = {
 };
 const rev = () => q.rev.get().v;
 const now = () => new Date().toISOString();
-function tx(fn) { db.exec('BEGIN IMMEDIATE'); try { const r = fn(); db.exec('COMMIT'); return r; } catch (e) { db.exec('ROLLBACK'); throw e; } }
+function tx(fn) { db.exec('BEGIN IMMEDIATE'); try { const r = fn(); db.exec('COMMIT'); return r; } catch (e) { try { db.exec('ROLLBACK'); } catch {} throw e; } }
 
 // ---------- Задачі менеджерів (окрема таблиця; заявки й клієнти не змінюються) ----------
 const TASKS_FILE = join(here, 'tasks.json');
@@ -196,16 +196,22 @@ const SEED_FILE = join(here, 'seed.json');
   if (!Array.isArray(recs) || !recs.length) return;
   const norm = (e) => String(e || '').replace(/[^\d,]/g, '').split(',').map(x => x.replace(/^0+/, '')).filter(Boolean).join(',');
   let added = 0, skippedExisting = 0, skippedInvalid = 0;
+  q.bump.run(); const r = rev(); const t = now();
+  const byNorm = new Map();
+  for (const row of db.prepare('SELECT edrpou FROM clients').all()) { const n = norm(row.edrpou); if (n && !byNorm.has(n)) byNorm.set(n, row.edrpou); }
+  const pending = [];
+  for (const b of recs) {
+    const n = norm(b.edrpou); if (!n) { skippedInvalid++; continue; }
+    if (byNorm.has(n)) { skippedExisting++; continue; }
+    const rec = { ...b, edrpou: String(b.edrpou).trim() };
+    pending.push([n, rec]); byNorm.set(n, rec.edrpou);
+  }
+  // Невеликі транзакції не роздувають WAL на диску Render. Якщо запуск обірветься,
+  // наступний старт пропустить уже додане й безпечно продовжить з решти.
+  for (let i = 0; i < pending.length; i += 500) tx(() => {
+    for (const [, rec] of pending.slice(i, i + 500)) { q.upCli.run(rec.edrpou, JSON.stringify(rec), t, r); added++; }
+  });
   tx(() => {
-    q.bump.run(); const r = rev(); const t = now();
-    const byNorm = new Map();
-    for (const row of db.prepare('SELECT edrpou FROM clients').all()) { const n = norm(row.edrpou); if (n && !byNorm.has(n)) byNorm.set(n, row.edrpou); }
-    for (const b of recs) {
-      const n = norm(b.edrpou); if (!n) { skippedInvalid++; continue; }
-      if (byNorm.has(n)) { skippedExisting++; continue; }
-      const rec = { ...b, edrpou: String(b.edrpou).trim() };
-      q.upCli.run(rec.edrpou, JSON.stringify(rec), t, r); byNorm.set(n, rec.edrpou); added++;
-    }
     q.hist.run(t, 'import', KEY, JSON.stringify({ added, skippedExisting, skippedInvalid }));
     db.prepare('INSERT OR REPLACE INTO meta (k, v) VALUES (?, ?)').run(KEY, t);
   });
